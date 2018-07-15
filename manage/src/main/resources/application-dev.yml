@@ -1,0 +1,99 @@
+spring: 
+  datasource:
+    name: manage1
+    url: jdbc:mysql://192.168.241.3:3306/mysqldb?useUnicode=true&characterEncoding=utf-8
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.jdbc.Driver
+    # 使用druid数据源  
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      # 初始化大小，最小，最大  
+      initial-size: 5
+      min-idle: 5
+      max-active: 20
+      # 配置获取连接等待超时的时间 
+      max-wait: 60000
+      # 打开PSCache，并且指定每个连接上PSCache的大小  
+      pool-prepared-statements: true
+      max-pool-prepared-statement-per-connection-size: 20
+      #校验数据库查询sql
+      validation-query: SELECT 1 FROM DUAL
+      validation-query-timeout: 5000
+      test-on-borrow: true
+      test-on-return: false
+      test-while-idle: true
+      # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒  
+      time-between-eviction-runs-millis: 60000
+      # 配置一个连接在池中最小、最大生存的时间，单位是毫秒 
+      min-evictable-idle-time-millis: 300000
+      #max-evictable-idle-time-millis: 300000
+      # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙  ,mergeStat合并相同的sql
+      filters: mergeStat,wall,log4j
+      #配置数据库断开后自动连接的。
+      log-abandoned: true
+      remove-abandoned: true
+      remove-abandoned-timeout-millis: 1800
+      #监控配置
+      # WebStatFilter配置，说明请参考Druid Wiki，配置_配置WebStatFilter,用于监控http请求的Controller
+      web-stat-filter:
+        #是否启用StatViewServlet默认值true
+        enabled: true
+        #uri监控的uri开头,本项目的context-path 为/manage，所以配置成/manage，拦截所有请求
+        url-pattern: /*
+        #经常需要排除一些不必要的url，比如*.js,/jslib/*等等
+        exclusions: '*.js,*.gif,*.jpg,*.png,*.css,*.ico,/druid/*'
+        #session统计功能
+        session-stat-enable: true 
+        #缺省sessionStatMaxCount是1000个。你可以按需要进行配置
+        session-stat-max-count: 500
+        #你可以配置principalSessionName，使得druid能够知道当前的session的用户是谁
+        principal-session-name: manage1
+        #如果你的user信息保存在cookie中，你可以配置principalCookieName，使得druid知道当前的user是谁
+        #principal-cookie-name: 
+        #druid 0.2.7版本开始支持profile，配置profileEnable能够监控单个url调用的sql列表。
+        profile-enable: true
+      # StatViewServlet配置，说明请参考Druid Wiki，配置_StatViewServlet配置
+      # Druid内置提供了一个StatViewServlet用于展示Druid的统计信息。
+      stat-view-servlet:
+        #是否启用StatViewServlet默认值true
+        enabled: true
+        #根据配置中的url-pattern来访问内置监控页面，如果是下面的配置，内置监控页面的首页是/druid/index.html
+        url-pattern: /druid/*
+        #在StatViewSerlvet输出的html页面中，有一个功能是Reset All，执行这个操作之后，会导致所有计数器清零，重新计数。你可以通过配置参数关闭它。
+        reset-enable: false
+        #配置监控页面访问用户密码
+        login-username: root
+        login-password: 123456
+        #StatViewSerlvet展示出来的监控信息比较敏感，是系统运行的内部情况，如果你需要做访问控制，可以配置allow和deny这两个参数。
+        #deny优先于allow，如果在deny列表中，就算在allow列表中，也会被拒绝。
+        #如果allow没有配置或者为空，则允许所有访问
+        #由于匹配规则不支持IPV6，配置了allow或者deny之后，会导致IPV6无法访问。
+        #ip配置规则 128.242.127.1/24,128.242.128.1 ，24表示，前面24位是子网掩码，比对的时候，前面24位相同就匹配。
+        #白名单
+        allow: 192.168.11.121,127.0.0.1
+        #黑名单
+        #deny: 
+      # Spring监控配置，说明请参考Druid Github Wiki，配置_Druid和Spring关联监控配置,用于监控Service
+      #spring.datasource.druid.aop-patterns= # Spring监控AOP切入点，如x.y.z.service.*,配置多个英文逗号分隔
+      # 如果spring.datasource.druid.aop-patterns要代理的类没有定义interface请设置spring.aop.proxy-target-class=true
+      aop-patterns: bros.manage.business.service.*
+
+#Mybatis
+mybatis:
+  config-location: classpath:config/mybatis/mybatis-config.xml
+  mapper-locations: classpath:config/mybatis/mapper/*.xml
+  type-aliases-package: bros.manage.business.mapper
+#logback日志文件路径
+logging:
+  config: classpath:logbak-spring.xml
+logback: 
+  #logdir: /Users/inke/dev/log/tomcat/sell
+  logdir: /log/springbootlog
+  appname: manage
+  #分割日志文件大小
+  filesize: 50 MB
+  #日志文件级别：受rootLevel控制，需要保持一致，不一致按rootLevel级别
+  fileLevel: DEBUG
+  consoleLevel: DEBUG
+  rootLevel: DEBUG

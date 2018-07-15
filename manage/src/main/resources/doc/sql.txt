@@ -1,0 +1,73 @@
+create table TEL_T_RECEIVE_QUEUE
+(
+  tele_id   VARCHAR2(26) not null,
+  rec_date  DATE,
+  teletext  VARCHAR2(4000),
+  tele_flag VARCHAR2(40),
+  v_flag    VARCHAR2(12) default '0',
+  rec_ip    VARCHAR2(15),
+  rec_mac   VARCHAR2(30),
+  userid    VARCHAR2(12)
+);
+create table TEL_T_SEND_QUEUE
+(
+  tele_id      VARCHAR2(26) not null,
+  send_date    DATE,
+  tel_type     VARCHAR2(6),
+  eleid        VARCHAR2(10),
+  turnid       VARCHAR2(10),
+  rectime      VARCHAR2(6),
+  tellevel     VARCHAR2(4),
+  recaddress   VARCHAR2(70),
+  sendaddress  VARCHAR2(8),
+  sendtime     VARCHAR2(6),
+  plan_id      NUMBER(10),
+  tel_text     VARCHAR2(4000),
+  userid       VARCHAR2(12),
+  send_flag    VARCHAR2(1),
+  originaltxt  VARCHAR2(3000),
+  send_ip      VARCHAR2(15),
+  send_mac     VARCHAR2(30),
+  old_tel_id   VARCHAR2(80),
+  flightnumber VARCHAR2(80),
+  startloc     VARCHAR2(4),
+  endloc       VARCHAR2(4),
+  insert_time  DATE
+);
+create table LOG_T_SYS_STATE
+(
+  log_num       NUMBER(10) not null,
+  log_time      DATE not null,
+  sys_deal_type VARCHAR2(10) not null,
+  sys_state     VARCHAR2(10) not null,
+  log_sys       VARCHAR2(30) not null,
+  log_memo      VARCHAR2(300) not null,
+  log_grade     VARCHAR2(10) not null,
+  log_class     VARCHAR2(10) not null,
+  userid        VARCHAR2(12) not null,
+  dela_ip       VARCHAR2(15) not null,
+  dela_mac      VARCHAR2(30) not null
+);
+-- Add comments to the columns 
+comment on column LOG_T_SYS_STATE.log_num
+  is '日志序号';
+comment on column LOG_T_SYS_STATE.log_time
+  is '日志时间';
+comment on column LOG_T_SYS_STATE.sys_deal_type
+  is '系统操作类型';
+comment on column LOG_T_SYS_STATE.sys_state
+  is '系统状态 ';
+comment on column LOG_T_SYS_STATE.log_sys
+  is '对应系统';
+comment on column LOG_T_SYS_STATE.log_memo
+  is '日志描述';
+comment on column LOG_T_SYS_STATE.log_grade
+  is '日志等级';
+comment on column LOG_T_SYS_STATE.log_class
+  is '日志分类';
+comment on column LOG_T_SYS_STATE.userid
+  is '操作人员';
+comment on column LOG_T_SYS_STATE.dela_ip
+  is '操作机器IP';
+comment on column LOG_T_SYS_STATE.dela_mac
+  is '操作机器MAC';

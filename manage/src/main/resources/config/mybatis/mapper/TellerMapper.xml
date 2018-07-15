@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bros.manage.business.mapper.TellerMapper" >
+    <resultMap id="tellerMap" type="java.util.HashMap" >
+        <result property="btr_id" column="BTR_ID" />
+        <result property="btr_legal" column="BTR_LEGAL" />
+        <result property="btr_branchcode" column="BTR_BRANCHCODE" />
+        <result property="btr_code" column="BTR_CODE" />
+        <result property="btr_name" column="BTR_NAME" />
+        <result property="btr_desc" column="BTR_DESC" />
+        <result property="btr_address" column="BTR_ADDRESS" />
+        <result property="btr_certtype" column="BTR_CERTTYPE" />
+        <result property="btr_certno" column="BTR_CERTNO" />
+        <result property="btr_mobile" column="BTR_MOBILE" />
+        <result property="btr_phone" column="BTR_PHONE" />
+        <result property="btr_email" column="BTR_EMAIL" />
+        <result property="btr_pwd" column="BTR_PWD" />
+        <result property="btr_pwdstt" column="BTR_PWDSTT" />
+        <result property="btr_stt" column="BTR_STT" />
+        <result property="btr_loginstt" column="BTR_LOGINSTT" />
+        <result property="btr_validate_type" column="BTR_VALIDATE_TYPE" />
+    </resultMap>
+
+    <sql id="bmaTeller" >
+        BTR_ID,
+		BTR_LEGAL,
+		BTR_BRANCHCODE,
+		BTR_CODE,
+		BTR_NAME,
+		BTR_DESC,
+		BTR_ADDRESS,
+		BTR_CERTTYPE,
+		BTR_CERTNO,
+		BTR_MOBILE,
+		BTR_PHONE,
+		BTR_EMAIL,
+		BTR_PWD,
+		BTR_PWDSTT,
+		BTR_STT,
+		BTR_LOGINSTT,
+		BTR_VALIDATE_TYPE
+    </sql>
+
+    <select id="getTellerById" resultMap="tellerMap"  >
+       SELECT 
+       <include refid="bmaTeller" />
+       FROM BMA_TELLER
+       where BTR_ID=#{id}
+    </select>
+
+</mapper>
