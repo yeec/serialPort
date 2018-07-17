@@ -4,6 +4,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.List;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -17,6 +18,10 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
+
+import bros.manage.business.view.LocalBoard;
+import bros.manage.entity.SerialParameters;
+
 
 // 参数设置子窗口
 public class JDialogOptions extends javax.swing.JDialog {
@@ -62,12 +67,15 @@ public class JDialogOptions extends javax.swing.JDialog {
 	private JLabel jLabel2;
 	private JLabel jLabel1;
 	private JComboBox jComboBoxDatabits;
+	private SerialParameters serialParameters;
+	
+	public static LocalBoard mainBoard;
 
 	public JDialogOptions(JFrame parentFrame) {
 		super(parentFrame, "参数设置");
 		this.parentframe = parentFrame;
+		serialParameters= new SerialParameters();
 		initGUI();
-
 		parentFrame.setEnabled(false);
 		this.setVisible(true);
 	}
@@ -75,8 +83,8 @@ public class JDialogOptions extends javax.swing.JDialog {
 	public JDialogOptions(JFrame parentFrame, String title) {
 		super(parentFrame, title);
 		this.parentframe = parentFrame;
+		serialParameters= new SerialParameters();
 		initGUI();
-
 		this.setVisible(true);
 	}
 
@@ -97,7 +105,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 
 			jTabbedPaneOptions = new JTabbedPane();
 			this.getContentPane().add(jTabbedPaneOptions);
-			jTabbedPaneOptions.setBounds(1, 1, 376, 305);
+			jTabbedPaneOptions.setBounds(1, 1, 376, 290);
 
 			jPanelSPOptions = new JPanel();
 			jTabbedPaneOptions.addTab("串口参数设置", null, jPanelSPOptions, null);
@@ -199,6 +207,9 @@ public class JDialogOptions extends javax.swing.JDialog {
 			jComboBoxFlowCtlOut.setModel(jComboBoxFlowCtlOutModel);
 			jComboBoxFlowCtlOut.setBounds(145, 200, 200, 20);
 			jComboBoxFlowCtlOut.setFont(new java.awt.Font("Dialog", 1, 18));
+			
+			
+			LoadSPParameters();
 
 			jButtonReset = new JButton();
 			jPanelSPOptions.add(jButtonReset);
@@ -284,7 +295,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 			jButtonOK.setFont(new java.awt.Font("Dialog",1,18));
 			jButtonOK.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
-//					jButtonOKMouseClicked(evt);
+					jButtonOKMouseClicked(evt);
 				}
 			});
 			
@@ -323,6 +334,56 @@ public class JDialogOptions extends javax.swing.JDialog {
 	
 	// 取消
 	private void jButtonCancelMouseClicked(MouseEvent evt) {
+		this.dispose();
+	}
+	
+	// 加载串口配置参数
+	private void LoadSPParameters(){
+		// 
+		List<String>  commList = SerialPortManager.findPort();
+		// 检查是否有可用串口，有则加入选项中
+		if (commList == null || commList.size() < 1) {
+//			ShowUtils.warningMessage("没有搜索到有效串口！");
+			MainWindow.mainBoard.addMsg("没有搜索到有效串口！", LocalBoard.INFO_SYSTEM);
+		} else {
+			for (String s : commList) {
+				jComboBoxPortName.addItem(s);
+				MainWindow.mainBoard.addMsg("搜索到有效串口:"+ s, LocalBoard.INFO_SYSTEM);
+			}
+		}
+		
+//		jComboBoxPortName.setSelectedItem(serialParameters.getPortName());
+		jComboBoxDatabits.setSelectedItem(serialParameters.getDatabitsString());
+		jComboBoxBaudRate.setSelectedItem(serialParameters.getBaudRateString());
+		jComboBoxParity.setSelectedItem(serialParameters.getParityString());
+		jComboBoxStopbits.setSelectedItem(serialParameters.getStopbitsString());
+		jComboBoxFlowCtlIn.setSelectedItem(serialParameters.getFlowControlInString());
+		jComboBoxFlowCtlOut.setSelectedItem(serialParameters.getFlowControlOutString());
+	};
+	
+	// 串口设定和数据库设置确定按钮函数
+	private void jButtonOKMouseClicked(MouseEvent evt) {
+		// 串口参数设置
+		serialParameters.setPortName(jComboBoxPortName.getSelectedItem().toString());// 端口
+		serialParameters.setBaudRate(jComboBoxBaudRate.getSelectedItem().toString());// 波特率
+		serialParameters.setDatabits(jComboBoxDatabits.getSelectedItem().toString());// 数据位
+		serialParameters.setStopbits(jComboBoxStopbits.getSelectedItem().toString());// 奇偶校验
+		serialParameters.setParity(jComboBoxParity.getSelectedItem().toString());// 停止位
+		serialParameters.setFlowControlIn(jComboBoxFlowCtlIn.getSelectedItem().toString());// 输入流控制
+		serialParameters.setFlowControlOut(jComboBoxFlowCtlOut.getSelectedItem().toString());// 输出流控制
+		
+		// 数据库参数设置
+		String serverAddress=jTextFieldServerAddress.getText(); // 地址
+		String serverPort=jTextFieldServerPort.getText();// 端口
+		String username=jTextFieldUsername.getText();// 用户名
+		String password =jTextFieldPassword.getText();// 密码
+		String serviceName=jTextFieldServiceName.getText();// 服务名
+		try {
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		this.dispose();
 	}
 }
