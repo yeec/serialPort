@@ -386,4 +386,9 @@ public class JDialogOptions extends javax.swing.JDialog {
 
 		this.dispose();
 	}
+
+	public SerialParameters getSerialParameters() {
+		return serialParameters;
+	}
+	
 }
