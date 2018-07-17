@@ -164,8 +164,8 @@ public class MainWindow extends JFrame {
 			configMenuItem.setFont(new java.awt.Font("Dialog", 1, 18));
 			configMenuItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
-					// 开始收发报
-					System.out.println("参数设置");
+					// 参数设置
+					configMenuItemActionPerformed(evt);
 				}
 			});
 			
@@ -208,8 +208,8 @@ public class MainWindow extends JFrame {
 			jButtonConfig.setFont(new java.awt.Font("Dialog", 1, 18));
 			jButtonConfig.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
-					// 开始收发报
-					System.out.println("参数设置");
+					// 参数设置
+					jButtonConfigMouseClicked(evt);
 				}
 			});
 			
@@ -295,6 +295,22 @@ public class MainWindow extends JFrame {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * 参数设置
+	 * @param evt
+	 */
+	private void configMenuItemActionPerformed(ActionEvent evt) {	
+		new JDialogOptions(this);	
+	}
+	
+	/**
+	 * 参数设置
+	 * @param evt
+	 */
+	private void jButtonConfigMouseClicked(MouseEvent evt) {
+		new JDialogOptions(this);	
 	}
 
 	/**
