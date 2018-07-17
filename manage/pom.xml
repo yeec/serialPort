@@ -86,12 +86,12 @@
 			<groupId>org.tranql</groupId>
 			<artifactId>tranql-connector-db2-common</artifactId>
 			<version>1.8</version>
-		</dependency> -->
+		</dependency>
 		<dependency>
 	       <groupId>db2jcc</groupId>
 	       <artifactId>db2jcc</artifactId>
 	       <version>9.0</version>
-	    </dependency>
+	    </dependency> -->
 	    <!-- c3p0数据源 -->
 	    <dependency>
 	       <groupId>c3p0</groupId>
