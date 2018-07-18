@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bros.manage.business.mapper.LogSysStatemMapper" >
+    <resultMap id="tellerMap" type="java.util.HashMap" >
+        <result property="log_num" column="LOG_NUM" />
+        <result property="log_time" column="LOG_TIME" />
+        <result property="log_sys" column="LOG_SYS" />
+        <result property="log_fun" column="LOG_FUN" />
+        <result property="log_type" column="LOG_TYPE" />
+        <result property="log_sql" column="LOG_SQL" />
+        <result property="log_result" column="LOG_RESULT" />
+        <result property="log_memo" column="LOG_MEMO" />
+        <result property="mainkey" column="MAINKEY" />
+        <result property="log_grade" column="LOG_GRADE" />
+        <result property="log_class" column="LOG_CLASS" />
+        <result property="userid" column="USERID" />
+        <result property="deal_num" column="DEAL_NUM" />
+        <result property="deal_type" column="DEAL_TYPE" />
+        <result property="deal_memo" column="DEAL_MEMO" />
+    </resultMap>
+
+    <sql id="logSysStatem" >
+		LOG_NUM, 
+		LOG_TIME, 
+		LOG_SYS, 
+		LOG_FUN, 
+		LOG_TYPE, 
+		LOG_SQL, 
+		LOG_RESULT, 
+		LOG_MEMO, 
+		MAINKEY, 
+		LOG_GRADE, 
+		LOG_CLASS, 
+		USERID, 
+		DEAL_NUM, 
+		DEAL_TYPE, 
+		DEAL_MEMO
+    </sql>
+	
+    <!-- 记录操作日志-->
+	<insert id="insertLogSysStatemInfo" parameterType="java.util.HashMap">
+		 insert into LOG_T_SYS_STATE (
+			LOG_NUM, 
+			LOG_TIME, 
+			LOG_SYS, 
+			LOG_FUN, 
+			LOG_TYPE, 
+			LOG_SQL, 
+			LOG_RESULT, 
+			LOG_MEMO, 
+			MAINKEY, 
+			LOG_GRADE, 
+			LOG_CLASS, 
+			USERID, 
+			DEAL_NUM, 
+			DEAL_TYPE, 
+			DEAL_MEMO
+		 ) values (
+			 #{logNum},
+			 #{logTime},
+			 #{logSys},
+			 #{logFun},
+			 #{logType}, 
+			 #{logSql},
+			 #{logResult}, 
+			 #{logMemo},
+			 #{mainkey},
+			 #{logGrade}, 
+			 #{logClass},
+			 #{userid},
+			 #{dealNum}, 
+			 #{dealType}, 
+			 #{dealMemo}
+		)		
+	</insert>
+
+</mapper>
