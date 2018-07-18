@@ -104,7 +104,7 @@ public class SerialPortManager {
 	public static void closePort(SerialPort serialPort) {
 		if (serialPort != null) {
 			serialPort.close();
-			MainWindow.mainBoard.addMsg("Serial port closed.", LocalBoard.INFO_SYSTEM);
+			MainWindow.mainBoard.addMsg("串口已关闭.", LocalBoard.INFO_SYSTEM);
 			MainWindow.serialPortStatus.setBackground(new java.awt.Color(255,0,0));
 			serialPort = null;
 		}

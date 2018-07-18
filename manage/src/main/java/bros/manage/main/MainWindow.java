@@ -27,6 +27,7 @@ import javax.swing.WindowConstants;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.entity.SerialParameters;
 import bros.manage.telegraph.SerialListener;
+import bros.manage.telegraph.SerialSendThread;
 import bros.manage.telegraph.exception.NoSuchPort;
 import bros.manage.telegraph.exception.NotASerialPort;
 import bros.manage.telegraph.exception.PortInUse;
@@ -75,6 +76,8 @@ public class MainWindow extends JFrame {
 	private SerialPort sp;
 	// 串口参数对象
 	private SerialParameters serialParameters;
+	//发送电报线程
+	private SerialSendThread thread;
 
 	// 文本区域对象
 	public static JTextArea recieveBoard, sendBoard;
@@ -351,24 +354,23 @@ public class MainWindow extends JFrame {
 	private void jButtonStartMouseClicked(MouseEvent evt) {
 
 		startTelegram();
-		jButtonStart.setEnabled(false);
-		jButtonStop.setEnabled(true);
-		jButtonConfig.setEnabled(false);
-		configMenuItem.setEnabled(false);
-		startMenuItem.setEnabled(false);
-		stopMenuItem.setEnabled(true);
+//		jButtonStart.setEnabled(false);
+//		jButtonStop.setEnabled(true);
+//		jButtonConfig.setEnabled(false);
+//		configMenuItem.setEnabled(false);
+//		startMenuItem.setEnabled(false);
+//		stopMenuItem.setEnabled(true);
 	}
 
 	private void startActionPerformed(ActionEvent evt) {
 
 		startTelegram();
-		jButtonStart.setEnabled(false);
-		jButtonStop.setEnabled(true);
-		jButtonConfig.setEnabled(false);
-		configMenuItem.setEnabled(false);
-		startMenuItem.setEnabled(false);
-		stopMenuItem.setEnabled(true);
-
+//		jButtonStart.setEnabled(false);
+//		jButtonStop.setEnabled(true);
+//		jButtonConfig.setEnabled(false);
+//		configMenuItem.setEnabled(false);
+//		startMenuItem.setEnabled(false);
+//		stopMenuItem.setEnabled(true);
 	}
 	
 	/**
@@ -399,32 +401,64 @@ public class MainWindow extends JFrame {
 	
 	private void stopTelegram() {
 
-		MainWindow.mainBoard.addMsg("System stopping ...", LocalBoard.INFO_SYSTEM);
+		MainWindow.mainBoard.addMsg("系统停止中 ...", LocalBoard.INFO_SYSTEM);
 		try {
+			//停止发送电报线程
+			stopSendThread();
+			
 			SerialPortManager.closePort(sp);
+			
+			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
 		} catch (Exception e) {
 		}
-
 	}
 
 	private void startTelegram() {
 		// 开始发报清屏
 		MainWindow.recieveBoard.setText(new String(""));
 		if (!initSP()) {
-			JOptionPane.showMessageDialog(this, "Configuration not found!\nPlease edit the configuration first!");
-			new JDialogOptions(this);
+			JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
+			serialParameters = new JDialogOptions(this).getSerialParameters();
 		} else {
+			jButtonStart.setEnabled(false);
+			jButtonStop.setEnabled(true);
+			jButtonConfig.setEnabled(false);
+			configMenuItem.setEnabled(false);
+			startMenuItem.setEnabled(false);
+			stopMenuItem.setEnabled(true);
+			MainWindow.mainBoard.addMsg("系统已就绪.", LocalBoard.INFO_SYSTEM);
 		}
-		MainWindow.mainBoard.addMsg("System started.", LocalBoard.INFO_SYSTEM);
+	}
+	
+	private void startSendThread(){
+		thread = new SerialSendThread(sp);
+		thread.start();
+		MainWindow.mainBoard.addMsg("发送电报线程启动.", LocalBoard.INFO_SYSTEM);
+	}
+	
+	private void stopSendThread(){
+		if(null!=thread){
+			if(!thread.isAlive()){
+				thread.notify();
+			}
+			thread.stopSafely();
+			thread.stop();
+			MainWindow.mainBoard.addMsg("发送电报线程停止.", LocalBoard.INFO_SYSTEM);
+		}
 	}
 
 	private boolean initSP() {
 
 		try {
-
+			if(null == serialParameters){
+				MainWindow.mainBoard.addMsg("请先设置收发报参数。", LocalBoard.INFO_SYSTEM);
+				return false;
+			}
 			sp = SerialPortManager.openPort(serialParameters);
 			SerialListener sl = new SerialListener(sp);
 			SerialPortManager.addListener(sp, sl);
+			//启动发送电报线程
+			startSendThread();
 		} catch (SerialPortParameterFailure e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
