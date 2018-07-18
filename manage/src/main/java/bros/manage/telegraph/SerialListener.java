@@ -60,8 +60,11 @@ public class SerialListener implements SerialPortEventListener {
 					} else {
 						// 读取串口数据
 						data = SerialPortManager.readFromPort(serialport);
+//						MainWindow.recieveBoard.setText(new String(data)+ "\r\n");
 						
-						MainWindow.mainBoard.addMsg("接收到电报:"+new String(data), LocalBoard.INFO_SYSTEM);
+						MainWindow.recieveBoard.append(new String(data) + "\r\n");
+						MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
+//						MainWindow.mainBoard.addMsg("接收到电报:"+new String(data), LocalBoard.INFO_SYSTEM);
 					}
 				} catch (Exception e) {
 					MainWindow.mainBoard.addMsg("系统异常："+e.toString(), LocalBoard.INFO_SYSTEM);

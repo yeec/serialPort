@@ -1,16 +1,16 @@
 package bros.manage.main;
 
-import gnu.io.SerialPort;
-
 import java.awt.GraphicsEnvironment;
+import java.awt.Image;
 import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.FileNotFoundException;
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -18,6 +18,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
@@ -31,6 +32,7 @@ import bros.manage.telegraph.exception.NotASerialPort;
 import bros.manage.telegraph.exception.PortInUse;
 import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
+import gnu.io.SerialPort;
 
 // 程序主窗口界面初始化
 public class MainWindow extends JFrame {
@@ -78,6 +80,9 @@ public class MainWindow extends JFrame {
 	public static JTextArea recieveBoard, sendBoard;
 
 	public static LocalBoard mainBoard;
+	
+	// 操作面板
+	private JPanel mOperatePanel = new JPanel();
 
 	public MainWindow() {
 		super();
@@ -102,13 +107,21 @@ public class MainWindow extends JFrame {
 			setResizable(false);
 
 			// 设置程序窗口居中显示
-			Point p = GraphicsEnvironment.getLocalGraphicsEnvironment()
-					.getCenterPoint();
-			setBounds(p.x - WIDTH / 2, p.y - HEIGHT / 2, WIDTH, HEIGHT);
+			int DIALOG_WHITE = 900;//宽度
+			int DIALOG_HEIGHT = 700;//高度
+			Point point = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
+			this.setBounds(point.x - DIALOG_WHITE / 2, point.y - DIALOG_HEIGHT / 2, DIALOG_WHITE, DIALOG_HEIGHT);
+
+//			Point p = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
+//			setBounds(p.x - WIDTH / 2, p.y - HEIGHT / 2, WIDTH, HEIGHT);
 			this.getContentPane().setLayout(null);
 
 			// 设置Title
 			setTitle("串口通信");
+			
+			
+	        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/java/bros/manage/main/logo.jpeg"); 
+	        this.setIconImage(icon);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -150,8 +163,8 @@ public class MainWindow extends JFrame {
 			stopMenuItem.setFont(new java.awt.Font("Dialog", 1, 18));
 			stopMenuItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
-					// 开始收发报
-					System.out.println("停止收发报");
+					// 停止收发报
+					stopActionPerformed(evt);
 				}
 			});
 
@@ -199,7 +212,7 @@ public class MainWindow extends JFrame {
 			jButtonStart.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
 					// 开始收发报
-					jButtonStartMouseClicked(evt);			
+					jButtonStartMouseClicked(evt);
 				}
 			});
 
@@ -211,8 +224,8 @@ public class MainWindow extends JFrame {
 			jButtonStop.setFont(new java.awt.Font("Dialog", 1, 18));
 			jButtonStop.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
-					// 开始收发报
-					System.out.println("停止收发报");
+					// 停止收发报
+					jButtonStopMouseClicked(evt);
 				}
 			});
 
@@ -345,7 +358,7 @@ public class MainWindow extends JFrame {
 		startMenuItem.setEnabled(false);
 		stopMenuItem.setEnabled(true);
 	}
-	
+
 	private void startActionPerformed(ActionEvent evt) {
 
 		startTelegram();
@@ -357,13 +370,48 @@ public class MainWindow extends JFrame {
 		stopMenuItem.setEnabled(true);
 
 	}
+	
+	/**
+	 * 停止数据接收和发送
+	 * @param evt
+	 */
+	private void jButtonStopMouseClicked(MouseEvent evt) {
+		stopTelegram();
+		jButtonStart.setEnabled(true);
+		jButtonStop.setEnabled(false);
+		jButtonConfig.setEnabled(true);
+		configMenuItem.setEnabled(true);
+		startMenuItem.setEnabled(true);
+		stopMenuItem.setEnabled(false);
+	}
+	
+	private void stopActionPerformed(ActionEvent evt) {
+		stopTelegram();
+		jButtonStart.setEnabled(true);
+		jButtonStop.setEnabled(false);
+		jButtonConfig.setEnabled(true);
+		configMenuItem.setEnabled(true);
+		startMenuItem.setEnabled(true);
+		stopMenuItem.setEnabled(false);
+
+	}
+	
+	
+	private void stopTelegram() {
+
+		MainWindow.mainBoard.addMsg("System stopping ...", LocalBoard.INFO_SYSTEM);
+		try {
+			SerialPortManager.closePort(sp);
+		} catch (Exception e) {
+		}
+
+	}
 
 	private void startTelegram() {
-
+		// 开始发报清屏
+		MainWindow.recieveBoard.setText(new String(""));
 		if (!initSP()) {
-			JOptionPane
-					.showMessageDialog(this,
-							"Configuration not found!\nPlease edit the configuration first!");
+			JOptionPane.showMessageDialog(this, "Configuration not found!\nPlease edit the configuration first!");
 			new JDialogOptions(this);
 		} else {
 		}
@@ -377,7 +425,7 @@ public class MainWindow extends JFrame {
 			sp = SerialPortManager.openPort(serialParameters);
 			SerialListener sl = new SerialListener(sp);
 			SerialPortManager.addListener(sp, sl);
-		}  catch (SerialPortParameterFailure e) {
+		} catch (SerialPortParameterFailure e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NotASerialPort e) {
