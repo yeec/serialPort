@@ -25,6 +25,37 @@ public class SerialListener implements SerialPortEventListener {
 	public SerialListener(SerialPort serialport) {
 		this.serialport = serialport;
 	}
+	
+	// 电报格式报文处理
+	public String getTele(String teleContent){
+		boolean flag = true;
+		while(flag){
+			int INZCZCTELEGRAPH = teleContent.lastIndexOf("ZCZC");
+			int INSOHTELEGRAPH = teleContent.lastIndexOf("SOH");
+			if(INZCZCTELEGRAPH!=-1){
+				int INNNNNTELEGRAPH = teleContent.lastIndexOf("NNNN");
+				teleContent = teleContent.substring(INZCZCTELEGRAPH, INNNNNTELEGRAPH);
+				if(teleContent.indexOf("NNNN")==-1){
+					teleContent = teleContent + "NNNN";
+					flag = false;
+					continue;
+				}
+			}else if(INSOHTELEGRAPH!=-1){
+				int INETXTELEGRAPH = teleContent.lastIndexOf("ETX");
+				teleContent = teleContent.substring(INSOHTELEGRAPH, INETXTELEGRAPH);
+				if(teleContent.indexOf("ETX")==-1){
+					teleContent = teleContent + "ETX";
+					flag = false;
+					continue;
+				}
+			}else{
+				teleContent = "输入字符串的格式不正确";
+				flag = false;
+				continue;
+			}
+		}
+		return teleContent;
+	}
 
 	/**
 	 * 处理监控到的串口事件
@@ -66,8 +97,8 @@ public class SerialListener implements SerialPortEventListener {
 					data = SerialPortManager.readFromPort(serialport);
 					// MainWindow.recieveBoard.setText(new String(data)+
 					// "\r\n");
-
-					MainWindow.recieveBoard.append(new String(data) + "\r\n");
+					String contextData = getTele(new String(data));
+					MainWindow.recieveBoard.append(contextData + "\r\n");
 					MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
 					if (MainWindow.serialPortStatus.getBackground().getRed() == 0) {
 						MainWindow.serialPortStatus.setBackground(new java.awt.Color(255, 0, 0));
@@ -79,8 +110,7 @@ public class SerialListener implements SerialPortEventListener {
 					// LocalBoard.INFO_SYSTEM);
 				}
 			} catch (Exception e) {
-				MainWindow.mainBoard.addMsg("系统异常：" + e.toString(),
-						LocalBoard.INFO_SYSTEM);
+				MainWindow.mainBoard.addMsg("系统异常：" + e.toString(),LocalBoard.INFO_SYSTEM);
 				logger.error("接收电报监听异常", e);
 			}
 			break;
