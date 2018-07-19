@@ -4,7 +4,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -19,8 +21,11 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.entity.SerialParameters;
+import bros.manage.exception.ServiceException;
+import bros.manage.util.DeviceInfo;
 
 
 // 参数设置子窗口
@@ -70,6 +75,9 @@ public class JDialogOptions extends javax.swing.JDialog {
 	private SerialParameters serialParameters;
 	
 	public static LocalBoard mainBoard;
+	
+	// 记录操作日志接口
+	private ILogSysStatemService logSysStatemService;
 
 	public JDialogOptions(JFrame parentFrame) {
 		super(parentFrame, "参数设置");
@@ -295,7 +303,12 @@ public class JDialogOptions extends javax.swing.JDialog {
 			jButtonOK.setFont(new java.awt.Font("Dialog",1,18));
 			jButtonOK.addMouseListener(new MouseAdapter() {
 				public void mouseClicked(MouseEvent evt) {
-					jButtonOKMouseClicked(evt);
+					try {
+						jButtonOKMouseClicked(evt);
+					} catch (ServiceException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			});
 			
@@ -362,7 +375,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 	};
 	
 	// 串口设定和数据库设置确定按钮函数
-	private void jButtonOKMouseClicked(MouseEvent evt) {
+	private void jButtonOKMouseClicked(MouseEvent evt) throws ServiceException {
 		// 串口参数设置
 		serialParameters.setPortName(jComboBoxPortName.getSelectedItem().toString());// 端口
 		serialParameters.setBaudRate(jComboBoxBaudRate.getSelectedItem().toString());// 波特率
@@ -378,9 +391,63 @@ public class JDialogOptions extends javax.swing.JDialog {
 		String username=jTextFieldUsername.getText();// 用户名
 		String password =jTextFieldPassword.getText();// 密码
 		String serviceName=jTextFieldServiceName.getText();// 服务名
+		
+		
+		
+		// 组装正常记录日志入参（串口参数配置）
+		Map<String, Object> serialParametersMap = new HashMap<String, Object>();
+		// 组装正常记录日志入参（数据库参数设置）
+		Map<String, Object> DBconfigMap = new HashMap<String, Object>();
+		// 系统操作类型
+		serialParametersMap.put("sysDealType", "串口参数");
+		// 操作机器IP
+		serialParametersMap.put("delaIp", DeviceInfo.getDeviceIp());
+		// 操作机器MAC
+		serialParametersMap.put("delaMac", DeviceInfo.getDeviceMAC());
+		// 系统操作类型
+		DBconfigMap.put("sysDealType", "数据库参数");
+		// 操作机器IP
+		DBconfigMap.put("delaIp", DeviceInfo.getDeviceIp());
+		// 操作机器MAC
+		DBconfigMap.put("delaMac", DeviceInfo.getDeviceMAC());
+		
 		try {
-			
+			// 日志描述
+			serialParametersMap.put("logMemo", "无");
+			// 系统状态
+			serialParametersMap.put("sysState", "成功");
+			// 日志等级
+			serialParametersMap.put("logGrade", "1");
+			// 串口参数配置界面, 记录系统状态日志
+			logSysStatemService.addLogSysStatemInfo(serialParametersMap);
+			// 日志描述
+			DBconfigMap.put("logMemo", "无");
+			// 系统状态
+			DBconfigMap.put("sysState", "成功");
+			// 日志等级
+			DBconfigMap.put("logGrade", "1");
+			// 数据库参数设置界面, 记录系统状态日志
+			logSysStatemService.addLogSysStatemInfo(DBconfigMap);
 		} catch (Exception e) {
+			// 日志描述
+			String logMemo = "串口参数组装失败, 错误信息:" + (e.getMessage());
+			serialParametersMap.put("logMemo", logMemo);
+			// 系统状态
+			serialParametersMap.put("sysState", "失败");
+			// 日志等级
+			serialParametersMap.put("logGrade", "2");
+			// 串口参数配置界面, 记录系统状态日志
+			logSysStatemService.addLogSysStatemInfo(serialParametersMap);
+			
+			// 日志描述
+			String logMemoDB = "数据库参数组装失败, 错误信息:" + (e.getMessage());
+			DBconfigMap.put("logMemo", logMemoDB);
+			// 系统状态
+			DBconfigMap.put("sysState", "失败");
+			// 日志等级
+			DBconfigMap.put("logGrade", "2");
+			// 数据库参数设置界面, 记录系统状态日志
+			logSysStatemService.addLogSysStatemInfo(DBconfigMap);
 			e.printStackTrace();
 		}
 

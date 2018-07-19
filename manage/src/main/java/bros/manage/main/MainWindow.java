@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -24,8 +26,10 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 
+import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.entity.SerialParameters;
+import bros.manage.exception.ServiceException;
 import bros.manage.telegraph.SerialListener;
 import bros.manage.telegraph.SerialSendThread;
 import bros.manage.telegraph.exception.NoSuchPort;
@@ -33,6 +37,7 @@ import bros.manage.telegraph.exception.NotASerialPort;
 import bros.manage.telegraph.exception.PortInUse;
 import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
+import bros.manage.util.DeviceInfo;
 import gnu.io.SerialPort;
 
 // 程序主窗口界面初始化
@@ -86,6 +91,9 @@ public class MainWindow extends JFrame {
 	
 	// 操作面板
 	private JPanel mOperatePanel = new JPanel();
+	
+	// 记录操作日志接口
+	private ILogSysStatemService logSysStatemService;
 
 	public MainWindow() {
 		super();
@@ -342,7 +350,7 @@ public class MainWindow extends JFrame {
 	 */
 	private void exitMenuItemActionPerformed(ActionEvent evt) {
 		this.dispose();
-		// stopTelegram();
+		stopTelegram();
 		System.exit(0);
 	}
 
@@ -400,6 +408,15 @@ public class MainWindow extends JFrame {
 	
 	
 	private void stopTelegram() {
+		
+		// 组装正常记录日志入参（电报收发系统接收发送状态改变日志）
+		Map<String, Object> stopTelegramMap = new HashMap<String, Object>();
+		// 系统操作类型
+		stopTelegramMap.put("sysDealType", "停止");
+		// 操作机器IP
+		stopTelegramMap.put("delaIp", DeviceInfo.getDeviceIp());
+		// 操作机器MAC
+		stopTelegramMap.put("delaMac", DeviceInfo.getDeviceMAC());
 
 		MainWindow.mainBoard.addMsg("系统停止中 ...", LocalBoard.INFO_SYSTEM);
 		try {
@@ -409,24 +426,80 @@ public class MainWindow extends JFrame {
 			SerialPortManager.closePort(sp);
 			
 			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
+			
+			
+			// 日志描述
+			stopTelegramMap.put("logMemo", "无");
+			// 系统状态
+			stopTelegramMap.put("sysState", "成功");
+			// 日志等级
+			stopTelegramMap.put("logGrade", "1");
+			// 电报收发系统接收发送状态改变日志
+			logSysStatemService.addLogSysStatemInfo(stopTelegramMap);
 		} catch (Exception e) {
+			
+			// 日志描述
+			String logMemo = "电报收发系统停止失败, 错误信息:" + (e.getMessage());
+			stopTelegramMap.put("logMemo", logMemo);
+			// 系统状态
+			stopTelegramMap.put("sysState", "失败");
+			// 日志等级
+			stopTelegramMap.put("logGrade", "1");
+			// 电报收发系统接收发送状态改变日志
+			try {
+				logSysStatemService.addLogSysStatemInfo(stopTelegramMap);
+			} catch (ServiceException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		}
 	}
 
-	private void startTelegram() {
-		// 开始发报清屏
-		MainWindow.recieveBoard.setText(new String(""));
-		if (!initSP()) {
-			JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
-			serialParameters = new JDialogOptions(this).getSerialParameters();
-		} else {
-			jButtonStart.setEnabled(false);
-			jButtonStop.setEnabled(true);
-			jButtonConfig.setEnabled(false);
-			configMenuItem.setEnabled(false);
-			startMenuItem.setEnabled(false);
-			stopMenuItem.setEnabled(true);
-			MainWindow.mainBoard.addMsg("系统已就绪.", LocalBoard.INFO_SYSTEM);
+	private void startTelegram(){
+		try {
+			// 开始发报清屏
+			MainWindow.recieveBoard.setText(new String(""));
+			
+			// 组装正常记录日志入参（电报收发系统接收发送状态改变日志）
+			Map<String, Object> startTelegramMap = new HashMap<String, Object>();
+			// 系统操作类型
+			startTelegramMap.put("sysDealType", "运行");
+			// 操作机器IP
+			startTelegramMap.put("delaIp", DeviceInfo.getDeviceIp());
+			// 操作机器MAC
+			startTelegramMap.put("delaMac", DeviceInfo.getDeviceMAC());
+			if (!initSP()) {
+				JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
+				serialParameters = new JDialogOptions(this).getSerialParameters();
+				// 日志描述
+				String logMemo = "电报收发系统接收初始化失败, 错误信息:" + (new IllegalStateException("初始化失败"));
+				startTelegramMap.put("logMemo", logMemo);
+				// 系统状态
+				startTelegramMap.put("sysState", "失败");
+				// 日志等级
+				startTelegramMap.put("logGrade", "1");
+				// 电报收发系统接收发送状态改变日志
+				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
+			} else {
+				jButtonStart.setEnabled(false);
+				jButtonStop.setEnabled(true);
+				jButtonConfig.setEnabled(false);
+				configMenuItem.setEnabled(false);
+				startMenuItem.setEnabled(false);
+				stopMenuItem.setEnabled(true);
+				MainWindow.mainBoard.addMsg("系统已就绪.", LocalBoard.INFO_SYSTEM);
+				
+				// 日志描述
+				startTelegramMap.put("logMemo", "无");
+				// 系统状态
+				startTelegramMap.put("sysState", "成功");
+				// 日志等级
+				startTelegramMap.put("logGrade", "1");
+				// 电报收发系统接收发送状态改变日志
+				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
+			}
+		} catch (ServiceException e) {
+			e.printStackTrace();
 		}
 	}
 	

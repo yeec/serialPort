@@ -4,74 +4,62 @@
 <mapper namespace="bros.manage.business.mapper.LogSysStatemMapper" >
     <resultMap id="tellerMap" type="java.util.HashMap" >
         <result property="log_num" column="LOG_NUM" />
-        <result property="log_time" column="LOG_TIME" />
-        <result property="log_sys" column="LOG_SYS" />
-        <result property="log_fun" column="LOG_FUN" />
-        <result property="log_type" column="LOG_TYPE" />
-        <result property="log_sql" column="LOG_SQL" />
-        <result property="log_result" column="LOG_RESULT" />
-        <result property="log_memo" column="LOG_MEMO" />
-        <result property="mainkey" column="MAINKEY" />
-        <result property="log_grade" column="LOG_GRADE" />
-        <result property="log_class" column="LOG_CLASS" />
-        <result property="userid" column="USERID" />
-        <result property="deal_num" column="DEAL_NUM" />
-        <result property="deal_type" column="DEAL_TYPE" />
-        <result property="deal_memo" column="DEAL_MEMO" />
+		<result property="log_time" column="LOG_TIME" />
+		<result property="sys_deal_type" column="SYS_DEAL_TYPE" />
+		<result property="sys_state" column="SYS_STATE" />
+		<result property="log_sys" column="LOG_SYS" />
+		<result property="log_memo" column="LOG_MEMO" />
+		<result property="log_grade" column="LOG_GRADE" />
+		<result property="log_class" column="LOG_CLASS" />
+		<result property="userid" column="USERID" />
+		<result property="dela_ip" column="DELA_IP" />
+		<result property="dela_mac" column="DELA_MAC" />
+		<result property="dispose" column="DISPOSE" />
     </resultMap>
 
     <sql id="logSysStatem" >
-		LOG_NUM, 
-		LOG_TIME, 
-		LOG_SYS, 
-		LOG_FUN, 
-		LOG_TYPE, 
-		LOG_SQL, 
-		LOG_RESULT, 
-		LOG_MEMO, 
-		MAINKEY, 
-		LOG_GRADE, 
-		LOG_CLASS, 
-		USERID, 
-		DEAL_NUM, 
-		DEAL_TYPE, 
-		DEAL_MEMO
+		LOG_NUM,
+		LOG_TIME,
+		SYS_DEAL_TYPE,
+		SYS_STATE,
+		LOG_SYS,
+		LOG_MEMO,
+		LOG_GRADE,
+		LOG_CLASS,
+		USERID,
+		DELA_IP,
+		DELA_MAC,
+		DISPOSE,
     </sql>
 	
-    <!-- 记录操作日志-->
+    <!-- 记录系统状态日志表-->
 	<insert id="insertLogSysStatemInfo" parameterType="java.util.HashMap">
 		 insert into LOG_T_SYS_STATE (
-			LOG_NUM, 
-			LOG_TIME, 
-			LOG_SYS, 
-			LOG_FUN, 
-			LOG_TYPE, 
-			LOG_SQL, 
-			LOG_RESULT, 
-			LOG_MEMO, 
-			MAINKEY, 
-			LOG_GRADE, 
-			LOG_CLASS, 
-			USERID, 
-			DEAL_NUM, 
-			DEAL_TYPE, 
-			DEAL_MEMO
+			LOG_NUM,
+			LOG_TIME,
+			SYS_DEAL_TYPE,
+			SYS_STATE,
+			LOG_SYS,
+			LOG_MEMO,
+			LOG_GRADE,
+			LOG_CLASS,
+			USERID,
+			DELA_IP,
+			DELA_MAC,
+			DISPOSE,
 		 ) values (
-			 #{logNum},
-			 #{logTime},
-			 #{logSys},
-			 #{logFun},
-			 #{logType}, 
-			 #{logSql},
-			 #{logResult}, 
+			 ATMLOG.LOG_SEQ.NEXTVAL, 
+			 sysdate,
+			 #{sysDealType},
+			 #{sysState},
+			 '电报接收系统', 
 			 #{logMemo},
-			 #{mainkey},
-			 #{logGrade}, 
-			 #{logClass},
-			 #{userid},
-			 #{dealNum}, 
-			 #{dealType}, 
-			 #{dealMemo}
+			 #{logGrade},
+			 '值班',
+			 'SYSTEM_TEL',
+			 #{delaIp},
+			 #{delaMac},
+			 '0'
 		)		
 	</insert>
 

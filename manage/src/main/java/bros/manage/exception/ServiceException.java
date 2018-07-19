@@ -11,8 +11,8 @@ import bros.manage.constants.BaseErrorCodeConstants;
  * @ClassName: ServiceException 
  * @Description: 服务层异常类，扩展自Exception，添加错误码，程序中抛出错误码，由Action捕获异常，
  * 错误处理错误信息，异常中已可以添加错误信息，可以输出到日志中或是默认情况使用)
- * @author 何鹏
- * @date 2016年5月14日 下午3:03:50 
+ * @author LW
+ * @date 2018年7月19日 下午3:03:50 
  * @version 1.0
  */
 public class ServiceException extends Exception implements Serializable {

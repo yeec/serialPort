@@ -1,6 +1,6 @@
 package bros.manage.business.mapper;
 
-import bros.manage.entity.LogSysStatemBen;
+import java.util.Map;
 
 // 记录操作日志Mapper类
 /**
@@ -11,5 +11,5 @@ import bros.manage.entity.LogSysStatemBen;
 public interface LogSysStatemMapper {
 	
 	// 记录操作日志
-	public void insertLogSysStatemInfo(LogSysStatemBen logSysStatemBen);
+	public void insertLogSysStatemInfo(Map<String, Object> contextMap);
 }
