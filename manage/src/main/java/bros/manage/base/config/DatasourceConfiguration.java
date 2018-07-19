@@ -21,8 +21,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
-@Configuration
-@Profile("prod")
+//@Configuration
+//@Profile("prod")
 public class DatasourceConfiguration {
 	
 	private static final Log logger = LogFactory.getLog(DatasourceConfiguration.class);

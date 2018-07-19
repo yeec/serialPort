@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +27,10 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import bros.manage.NetUnionManageApplication;
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.entity.SerialParameters;
@@ -38,9 +43,11 @@ import bros.manage.telegraph.exception.PortInUse;
 import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
 import bros.manage.util.DeviceInfo;
+import bros.manage.util.SpringUtil;
 import gnu.io.SerialPort;
 
 // 程序主窗口界面初始化
+@SpringBootApplication
 public class MainWindow extends JFrame {
 
 	// 创建一个菜单栏
@@ -92,9 +99,13 @@ public class MainWindow extends JFrame {
 	// 操作面板
 	private JPanel mOperatePanel = new JPanel();
 	
-	// 记录操作日志接口
-	private ILogSysStatemService logSysStatemService;
-
+	// 获取bean  记录操作日志接口
+	private static ILogSysStatemService logSysStatemService;
+	
+	public void init(){
+		logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
+	}
+	
 	public MainWindow() {
 		super();
 		initGUI();
@@ -358,8 +369,7 @@ public class MainWindow extends JFrame {
 	 * 开始接收数据
 	 * 
 	 * @param evt
-	 */
-	private void jButtonStartMouseClicked(MouseEvent evt) {
+	 */	private void jButtonStartMouseClicked(MouseEvent evt) {
 
 		startTelegram();
 //		jButtonStart.setEnabled(false);
@@ -419,6 +429,7 @@ public class MainWindow extends JFrame {
 		stopTelegramMap.put("delaMac", DeviceInfo.getDeviceMAC());
 
 		MainWindow.mainBoard.addMsg("系统停止中 ...", LocalBoard.INFO_SYSTEM);
+		ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
 		try {
 			//停止发送电报线程
 			stopSendThread();
@@ -468,6 +479,7 @@ public class MainWindow extends JFrame {
 			startTelegramMap.put("delaIp", DeviceInfo.getDeviceIp());
 			// 操作机器MAC
 			startTelegramMap.put("delaMac", DeviceInfo.getDeviceMAC());
+			ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
 			if (!initSP()) {
 				JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
 				serialParameters = new JDialogOptions(this).getSerialParameters();
@@ -479,6 +491,7 @@ public class MainWindow extends JFrame {
 				// 日志等级
 				startTelegramMap.put("logGrade", "1");
 				// 电报收发系统接收发送状态改变日志
+				
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
 			} else {
 				jButtonStart.setEnabled(false);
@@ -551,5 +564,58 @@ public class MainWindow extends JFrame {
 
 		return true;
 
+	}
+	
+	
+	public static void main(String[] args) throws ServiceException {
+		
+		// 加载sping容器
+		SpringApplication.run(NetUnionManageApplication.class, args);
+		
+		
+		// 组装正常记录日志入参（数据库参数设置）
+		Map<String, Object> saveLaunchLogMap = new HashMap<String, Object>();
+		// 系统操作类型
+		saveLaunchLogMap.put("sysDealType", "启动");
+		// 操作机器IP
+		saveLaunchLogMap.put("delaIp", DeviceInfo.getDeviceIp());
+		// 操作机器MAC
+		saveLaunchLogMap.put("delaMac", DeviceInfo.getDeviceMAC());
+		
+		try {
+//			new MainWindow("串口调试助手");
+//			SwingUtilities.invokeLater(new Runnable() {
+//	            @Override
+//	            public void run() {
+//	            	new MainWindow("串口调试助手");
+//	            }
+//	        });
+			
+			// 日志描述
+			saveLaunchLogMap.put("logMemo", "无");
+			// 系统状态
+			saveLaunchLogMap.put("sysState", "成功");
+			// 日志等级
+			saveLaunchLogMap.put("logGrade", "1");
+			// 数据库参数设置界面, 记录系统状态日志
+			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
+		} catch (Exception e) {
+			// 日志描述
+			String logMemo = "数据库参数组装失败, 错误信息:" + (e.getMessage());
+			saveLaunchLogMap.put("logMemo", logMemo);
+			// 系统状态
+			saveLaunchLogMap.put("sysState", "失败");
+			// 日志等级
+			saveLaunchLogMap.put("logGrade", "1");
+			// 数据库参数设置界面, 记录系统状态日志
+			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
+			e.printStackTrace();
+		}
+		try {
+			System.in.read();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

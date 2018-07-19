@@ -26,6 +26,7 @@ import bros.manage.business.view.LocalBoard;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
 import bros.manage.util.DeviceInfo;
+import bros.manage.util.SpringUtil;
 
 
 // 参数设置子窗口
@@ -76,8 +77,8 @@ public class JDialogOptions extends javax.swing.JDialog {
 	
 	public static LocalBoard mainBoard;
 	
-	// 记录操作日志接口
-	private ILogSysStatemService logSysStatemService;
+	// 获取bean  记录操作日志接口
+	private static ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
 
 	public JDialogOptions(JFrame parentFrame) {
 		super(parentFrame, "参数设置");

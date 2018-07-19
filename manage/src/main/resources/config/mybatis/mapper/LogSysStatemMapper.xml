@@ -45,10 +45,9 @@
 			LOG_CLASS,
 			USERID,
 			DELA_IP,
-			DELA_MAC,
-			DISPOSE,
+			DELA_MAC
 		 ) values (
-			 ATMLOG.LOG_SEQ.NEXTVAL, 
+			 LOG_SEQ.NEXTVAL, 
 			 sysdate,
 			 #{sysDealType},
 			 #{sysState},
@@ -58,8 +57,7 @@
 			 '值班',
 			 'SYSTEM_TEL',
 			 #{delaIp},
-			 #{delaMac},
-			 '0'
+			 #{delaMac}
 		)		
 	</insert>
 

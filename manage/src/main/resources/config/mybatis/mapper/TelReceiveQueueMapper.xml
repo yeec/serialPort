@@ -27,7 +27,7 @@
 	<!-- 查询电报接收队列表 -->
     <select id="getTelReceiveInfo" resultMap="tellerMap"  >
        SELECT 
-       		<include refid="telSendQueue" />
+       		<include refid="telReceiveQueue" />
        FROM 
        		TEL_T_RECEIVE_QUEUE
     </select>
@@ -38,17 +38,13 @@
 			TEL_ID, 
 			REC_DATE, 
 			TELETEXT, 
-			TELE_FLAG, 
-			V_FLAG, 
 			REC_IP, 
 			REC_MAC, 
 			USERID
 		 ) values (
 			 #{telId},
-			 #{recDate},
+			 sysdate,
 			 #{teletext},
-			 #{teleFlag},
-			 #{vFlag}, 
 			 #{recIp},
 			 #{recMac}, 
 			 #{userid}

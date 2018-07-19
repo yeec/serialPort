@@ -103,6 +103,12 @@
 	    	<artifactId>poi</artifactId>
 	    	<version>3.11</version>
 	    </dependency>
+	    <!-- oracle -->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0</version>
+        </dependency>
 	</dependencies>
 
 	<build>
