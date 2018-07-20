@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="bros.manage.business.mapper.TelSendQueueMapper" >
-    <resultMap id="tellerMap" type="java.util.HashMap" >
+    <resultMap id="telSendQueueMap" type="java.util.HashMap" >
         <result property="tel_id" column="TEL_ID" />
 		<result property="send_date" column="SEND_DATE" />
 		<result property="tel_type" column="TEL_TYPE" />
@@ -16,8 +16,8 @@
 		<result property="plan_id" column="PLAN_ID" />
 		<result property="tel_text" column="TEL_TEXT" />
 		<result property="userid" column="USERID" />
-		<result property="deal_memo" column="SEND_FLAG" />
-		<result property="send_flag" column="ORIGINALTXT" />
+		<result property="send_flag" column="SEND_FLAG" />
+		<result property="originaltxt" column="ORIGINALTXT" />
 		<result property="send_ip" column="SEND_IP" />
 		<result property="send_mac" column="SEND_MAC" />
 		<result property="old_tel_id" column="OLD_TEL_ID" />
@@ -53,7 +53,7 @@
     </sql>
 	
 	<!-- 查询电报发送列表 -->
-    <select id="getTelSendInfo" resultMap="tellerMap"  >
+    <select id="getTelSendInfo" resultMap="telSendQueueMap"  >
        SELECT 
        		<include refid="telSendQueue" />
        FROM 
@@ -67,6 +67,6 @@
     <update id="updateTelSendInfo"  parameterType="java.util.HashMap">
 		UPDATE TEL_T_SEND_QUEUE
 		SET SEND_FLAG='1'
-		WHERE TEL_ID=#{tel_id}
+		WHERE TEL_ID=#{telId}
 	</update>
 </mapper>
