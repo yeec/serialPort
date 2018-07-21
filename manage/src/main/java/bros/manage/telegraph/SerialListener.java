@@ -4,19 +4,17 @@ import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import bros.manage.business.service.ITelReceiveQueueService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
-import bros.manage.main.SerialPortManager;
-import bros.manage.util.DeviceInfo;
-import bros.manage.util.SpringUtil;
+import bros.manage.util.DataBaseUtil;
 
 /**
  * 接收电报监听器
@@ -24,17 +22,23 @@ import bros.manage.util.SpringUtil;
  * @author wyc
  *
  */
-public class SerialListener implements SerialPortEventListener {
+public class SerialListener extends Thread implements SerialPortEventListener {
 
 	private static final Log logger = LogFactory.getLog(SerialListener.class);
-	private SerialPort serialport;
-	public SerialListener(SerialPort serialport) {
-		this.serialport = serialport;
+	InputStream inputStream; // 从串口来的输入流
+	public SerialListener(InputStream inputStream) {
+		this.inputStream = inputStream;
 	}
-	
+//	private BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>();
+	private BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>();
+	//读到的电报缓存
+	private StringBuffer sb = new StringBuffer();
+	//报文处理线程停止位
+	private boolean stop = false;
 	// 电报格式报文处理
-	public String getTele(String teleContent){
+	public boolean getTele(String teleContent){
 		boolean flag = true;
+		boolean result = false;
 		while(flag){
 			int INZCZCTELEGRAPH = teleContent.lastIndexOf("ZCZC");
 			int INSOHTELEGRAPH = teleContent.lastIndexOf("SOH");
@@ -59,13 +63,26 @@ public class SerialListener implements SerialPortEventListener {
 					}
 				}
 			}else{
-				teleContent = "输入字符串的格式不正确";
+				teleContent = "输入字符串的格式不正确:"+teleContent;
 				flag = false;
+				result = false;
 				continue;
 			}
 		}
-		return teleContent;
+		result = true;
+		return result;
+//		return teleContent;
 	}
+	
+	//清空报文缓存
+	public void clearBuffer(){
+		sb.setLength(0);;
+	}
+	//停止线程
+	public void stopHandle(){
+		stop = true;
+	}
+	
 
 	/**
 	 * 处理监控到的串口事件
@@ -100,55 +117,61 @@ public class SerialListener implements SerialPortEventListener {
 				MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
 				break;
 			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
-				byte[] data = null;
-				try {
-					if (serialport == null) {
-						MainWindow.mainBoard.addMsg("串口对象为空！监听失败！",
-								LocalBoard.INFO_SYSTEM);
-					} else {
-						// 读取串口数据
-						data = SerialPortManager.readFromPort(serialport);
-						// MainWindow.recieveBoard.setText(new String(data)+
-						// "\r\n");
-						String contextData = getTele(new String(data));
-						MainWindow.recieveBoard.append(contextData + "\r\n");
-						MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
-						
-						// 组装入场报文
-						Map<String,Object> contextMap = new HashMap<String,Object>();
-						// 主键
-						final String mainKey = UUID.randomUUID().toString();
-						contextMap.put("telId", mainKey);
-						// 电报报文
-						contextMap.put("teletext", contextData);
-						// 报文类别
-						contextMap.put("teleFlag", "ZCZC");
-						// 处理标志
-						contextMap.put("vFlag", "0");
-						// 接收机器IP
-						contextMap.put("recIp", DeviceInfo.getDeviceIp());
-						// 接收机器MA
-						contextMap.put("recMac", DeviceInfo.getDeviceMAC());
-						// 用户ID
-						contextMap.put("userid", "SYSTEM_TEL");
-						// 获取ben
-						ITelReceiveQueueService itelReceiveQueueService = (ITelReceiveQueueService) SpringUtil.getBean("telReceiveQueueService");
-						// 电报数据入库
-						itelReceiveQueueService.addTelReceiveQueueInfo(contextMap);
-						if (MainWindow.serialPortStatus.getBackground().getRed() == 0) {
-							MainWindow.serialPortStatus.setBackground(new java.awt.Color(255, 0, 0));
-						} else {
-							MainWindow.serialPortStatus.setBackground(new java.awt.Color(0, 255, 0));
-							MainWindow.serialPortStatus.repaint();
-						}
-						// MainWindow.mainBoard.addMsg("接收到电报:"+new String(data),
-						// LocalBoard.INFO_SYSTEM);
-					}
-				} catch (Exception e) {
-					MainWindow.mainBoard.addMsg("系统异常：" + e.toString(),LocalBoard.INFO_SYSTEM);
-					logger.error("接收电报监听异常", e);
-				}
+				byte[] readBuffer = new byte[1];
+	            try {
+	                int numBytes = -1;
+	                while (inputStream.available() > 0) {
+	                    numBytes = inputStream.read(readBuffer);
+
+	                    if (numBytes > 0) {
+	                        msgQueue.add(new String(readBuffer));
+	                        readBuffer = new byte[1];// 重新构造缓冲对象，否则有可能会影响接下来接收的数据
+	                    } else {
+	                        msgQueue.add("额------没有读到数据");
+	                    }
+	                }
+	            } catch (IOException e) {
+	            	logger.error("接收出口数据异常", e);
+	            }
 				break;
 		}
 	}
+	
+	@Override
+    public void run() {
+        // TODO Auto-generated method stub
+		
+		int count = 0;
+        try {
+            System.out.println("--------------任务处理线程运行了--------------");
+            while (!stop) {
+                // 如果堵塞队列中存在数据就将其输出
+                if (msgQueue.size() > 0) {
+//                	System.out.println("数据队列里还有数据");
+                	String tmp = msgQueue.take();
+                    sb.append(tmp);
+                    if((sb.indexOf("NNNN")!=-1 && sb.indexOf("ZCZC")!=-1 && sb.indexOf("ZCZC")<sb.lastIndexOf("NNNN"))
+                    		|| (sb.indexOf("SOH")!=-1 && sb.indexOf("ETX")!=-1 && sb.indexOf("SOH")<sb.lastIndexOf("ETX"))){
+                    	String result = sb.toString();
+                    	
+                    	if(getTele(result)){
+                    		sb = new StringBuffer();
+                    		count++;
+                    		MainWindow.recieveBoard.append("第"+count+"次电报:"+result + "\r\n");
+                    		DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN")!=-1 ? "NNNN":"SOH");
+                    		MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
+                    		if (MainWindow.serialPortStatus.getBackground().getRed() == 0) {
+    							MainWindow.serialPortStatus.setBackground(new java.awt.Color(255, 0, 0));
+    						} else {
+    							MainWindow.serialPortStatus.setBackground(new java.awt.Color(0, 255, 0));
+    							MainWindow.serialPortStatus.repaint();
+    						}
+                    	}
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+        	logger.error("处理接收电报队列线程异常",e);
+        }
+    }
 }

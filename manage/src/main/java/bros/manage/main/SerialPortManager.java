@@ -8,8 +8,11 @@ import gnu.io.SerialPort;
 import gnu.io.SerialPortEventListener;
 import gnu.io.UnsupportedCommOperationException;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -150,13 +153,32 @@ public class SerialPortManager {
 		byte[] bytes = {};
 		try {
 			in = serialPort.getInputStream();
-			// 缓冲区大小为一个字节
-			byte[] readBuffer = new byte[1];
-			int bytesNum = in.read(readBuffer);
-			while (bytesNum > 0) {
-				bytes = ArrayUtils.concat(bytes, readBuffer);
-				bytesNum = in.read(readBuffer);
+//			int bufflength = in.available();
+//			while(bufflength!=0){
+//				bytes = new byte[bufflength];
+//				in.read(bytes);
+//				bufflength = in.available();
+//			}
+			BufferedReader reader=new BufferedReader(new InputStreamReader(in));
+			int a = reader.read();
+			while(a!=-1){
+				char b = (char)a;
+				System.out.println(b);
+				a = reader.read();
 			}
+			// 缓冲区大小为一个字节
+			/*byte[] readBuffer = new byte[1];
+			
+//			int bytesNum = in.read(readBuffer);
+			int bytesNum=in.read(readBuffer);
+			while (bytesNum != -1) {
+				bytes = ArrayUtils.concat(bytes, readBuffer);
+				String dataTmp = new String(bytes);
+				if(dataTmp.indexOf("NNNN")!=-1||dataTmp.indexOf("ETX")!=-1){
+					break;
+				}
+				bytesNum = in.read(readBuffer);
+			}*/
 		} catch (IOException e) {
 			new ReadDataFromSerialPortFailure().printStackTrace();
 		} finally {
@@ -169,6 +191,7 @@ public class SerialPortManager {
 				new SerialPortInputStreamCloseFailure().printStackTrace();
 			}
 		}
+//		System.out.println(new String(bytes));
 		return bytes;
 	}
 

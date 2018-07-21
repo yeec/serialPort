@@ -21,12 +21,19 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import org.apache.commons.configuration.ConfigurationException;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
+import bros.manage.dynamic.datasource.DataSourceContextHolder;
+import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
-import bros.manage.util.DeviceInfo;
+import bros.manage.util.PropertiesUtil;
 import bros.manage.util.SpringUtil;
+
+import com.alibaba.druid.pool.DruidDataSource;
 
 
 // 参数设置子窗口
@@ -284,7 +291,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 			jPanelDBOptions.add(jTextFieldServiceName);
 			jTextFieldServiceName.setBounds(36, 195, 130, 20);
 			
-			
+			initDBInfo();
 //			jTextFieldServerAddress.setText(DBconfig.serverAddress);
 //			jTextFieldServerPort.setText(DBconfig.serverPort);
 //			jTextFieldUsername.setText(DBconfig.username);
@@ -375,81 +382,74 @@ public class JDialogOptions extends javax.swing.JDialog {
 		jComboBoxFlowCtlOut.setSelectedItem(serialParameters.getFlowControlOutString());
 	};
 	
+	private void initDBInfo() throws ServiceException{
+		
+		Map<String, Object> dbMap;
+		try {
+			dbMap = PropertiesUtil.getDBPropertiesInfo();
+			jTextFieldServerAddress.setText((String) dbMap.get("ip"));
+			jTextFieldServerPort.setText((String) dbMap.get("port"));
+			jTextFieldUsername.setText((String) dbMap.get("username"));
+			jTextFieldPassword.setText((String) dbMap.get("password"));
+			jTextFieldServiceName.setText((String) dbMap.get("svrName"));
+		} catch (ConfigurationException e) {
+			throw new ServiceException("读取数据库配置文件失败",e);
+		}
+		
+	}
+	
 	// 串口设定和数据库设置确定按钮函数
 	private void jButtonOKMouseClicked(MouseEvent evt) throws ServiceException {
-		// 串口参数设置
-		serialParameters.setPortName(jComboBoxPortName.getSelectedItem().toString());// 端口
-		serialParameters.setBaudRate(jComboBoxBaudRate.getSelectedItem().toString());// 波特率
-		serialParameters.setDatabits(jComboBoxDatabits.getSelectedItem().toString());// 数据位
-		serialParameters.setStopbits(jComboBoxStopbits.getSelectedItem().toString());// 奇偶校验
-		serialParameters.setParity(jComboBoxParity.getSelectedItem().toString());// 停止位
-		serialParameters.setFlowControlIn(jComboBoxFlowCtlIn.getSelectedItem().toString());// 输入流控制
-		serialParameters.setFlowControlOut(jComboBoxFlowCtlOut.getSelectedItem().toString());// 输出流控制
-		
-		// 数据库参数设置
-		String serverAddress=jTextFieldServerAddress.getText(); // 地址
-		String serverPort=jTextFieldServerPort.getText();// 端口
-		String username=jTextFieldUsername.getText();// 用户名
-		String password =jTextFieldPassword.getText();// 密码
-		String serviceName=jTextFieldServiceName.getText();// 服务名
-		
-		
-		
-		// 组装正常记录日志入参（串口参数配置）
-		Map<String, Object> serialParametersMap = new HashMap<String, Object>();
-		// 组装正常记录日志入参（数据库参数设置）
-		Map<String, Object> DBconfigMap = new HashMap<String, Object>();
-		// 系统操作类型
-		serialParametersMap.put("sysDealType", "串口参数");
-		// 操作机器IP
-		serialParametersMap.put("delaIp", DeviceInfo.getDeviceIp());
-		// 操作机器MAC
-		serialParametersMap.put("delaMac", DeviceInfo.getDeviceMAC());
-		// 系统操作类型
-		DBconfigMap.put("sysDealType", "数据库参数");
-		// 操作机器IP
-		DBconfigMap.put("delaIp", DeviceInfo.getDeviceIp());
-		// 操作机器MAC
-		DBconfigMap.put("delaMac", DeviceInfo.getDeviceMAC());
-		
 		try {
-			// 日志描述
-			serialParametersMap.put("logMemo", "无");
-			// 系统状态
-			serialParametersMap.put("sysState", "成功");
-			// 日志等级
-			serialParametersMap.put("logGrade", "1");
-			// 串口参数配置界面, 记录系统状态日志
-			logSysStatemService.addLogSysStatemInfo(serialParametersMap);
-			// 日志描述
-			DBconfigMap.put("logMemo", "无");
-			// 系统状态
-			DBconfigMap.put("sysState", "成功");
-			// 日志等级
-			DBconfigMap.put("logGrade", "1");
-			// 数据库参数设置界面, 记录系统状态日志
-			logSysStatemService.addLogSysStatemInfo(DBconfigMap);
-		} catch (Exception e) {
-			// 日志描述
-			String logMemo = "串口参数组装失败, 错误信息:" + (e.getMessage());
-			serialParametersMap.put("logMemo", logMemo);
-			// 系统状态
-			serialParametersMap.put("sysState", "失败");
-			// 日志等级
-			serialParametersMap.put("logGrade", "2");
-			// 串口参数配置界面, 记录系统状态日志
-			logSysStatemService.addLogSysStatemInfo(serialParametersMap);
+			// 串口参数设置
+			serialParameters.setPortName(jComboBoxPortName.getSelectedItem().toString());// 端口
+			serialParameters.setBaudRate(jComboBoxBaudRate.getSelectedItem().toString());// 波特率
+			serialParameters.setDatabits(jComboBoxDatabits.getSelectedItem().toString());// 数据位
+			serialParameters.setStopbits(jComboBoxStopbits.getSelectedItem().toString());// 奇偶校验
+			serialParameters.setParity(jComboBoxParity.getSelectedItem().toString());// 停止位
+			serialParameters.setFlowControlIn(jComboBoxFlowCtlIn.getSelectedItem().toString());// 输入流控制
+			serialParameters.setFlowControlOut(jComboBoxFlowCtlOut.getSelectedItem().toString());// 输出流控制
 			
-			// 日志描述
-			String logMemoDB = "数据库参数组装失败, 错误信息:" + (e.getMessage());
-			DBconfigMap.put("logMemo", logMemoDB);
-			// 系统状态
-			DBconfigMap.put("sysState", "失败");
-			// 日志等级
-			DBconfigMap.put("logGrade", "2");
-			// 数据库参数设置界面, 记录系统状态日志
-			logSysStatemService.addLogSysStatemInfo(DBconfigMap);
-			e.printStackTrace();
+			// 数据库参数设置
+			String ip=jTextFieldServerAddress.getText(); // 地址
+			String port=jTextFieldServerPort.getText();// 端口
+			String userName=jTextFieldUsername.getText();// 用户名
+			String password =jTextFieldPassword.getText();// 密码
+			String svrName=jTextFieldServiceName.getText();// 服务名
+			
+			/**
+			 * 通过页面定义数据库配置
+			 */
+			DruidDataSource dynamicDataSource = new DruidDataSource();
+			dynamicDataSource.setDriverClassName("oracle.jdbc.OracleDriver");
+			dynamicDataSource.setUrl("jdbc:oracle:thin:@"+ip+":"+port+":"+svrName);
+			dynamicDataSource.setUsername(userName);
+			dynamicDataSource.setPassword(password);
+			
+			/**
+			 * 创建动态数据源
+			 */
+			Map<Object, Object> dataSourceMap = DynamicDataSource.getInstance().getDataSourceMap();
+			dataSourceMap.put("dynamic-slave", dynamicDataSource);
+			DynamicDataSource.getInstance().setTargetDataSources(dataSourceMap);
+			
+			/**
+			 * 切换为动态数据源实例
+			 */
+			DataSourceContextHolder.setDBType("dynamic-slave");
+			
+			Map<String, Object> dbMap = new HashMap<String, Object>();
+			dbMap.put("ip", ip);
+			dbMap.put("port", port);
+			dbMap.put("userName", userName);
+			dbMap.put("password", password);
+			dbMap.put("svrName", svrName);
+		
+			PropertiesUtil.setDBPropertiesInfo(dbMap);
+		} catch (ConfigurationException e) {
+			throw new ServiceException("串口设定和数据库设置失败",e);
+		}catch(Exception ex){
+			throw new ServiceException("串口设定和数据库设置失败",ex);
 		}
 
 		this.dispose();

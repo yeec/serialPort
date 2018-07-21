@@ -1,5 +1,7 @@
 package bros.manage.main;
 
+import gnu.io.SerialPort;
+
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Point;
@@ -9,11 +11,13 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -21,18 +25,21 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.pool.DruidPooledConnection;
 
 import bros.manage.NetUnionManageApplication;
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
+import bros.manage.dynamic.datasource.DataSourceContextHolder;
+import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
 import bros.manage.telegraph.SerialListener;
@@ -44,10 +51,9 @@ import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
 import bros.manage.util.DeviceInfo;
 import bros.manage.util.SpringUtil;
-import gnu.io.SerialPort;
 
 // 程序主窗口界面初始化
-@SpringBootApplication
+//@SpringBootApplication
 public class MainWindow extends JFrame {
 
 	// 创建一个菜单栏
@@ -90,21 +96,15 @@ public class MainWindow extends JFrame {
 	private SerialParameters serialParameters;
 	//发送电报线程
 	private SerialSendThread thread;
+	//串口监听
+	private SerialListener sl;
 
 	// 文本区域对象
 	public static JTextArea recieveBoard, sendBoard;
 
 	public static LocalBoard mainBoard;
 	
-	// 操作面板
-	private JPanel mOperatePanel = new JPanel();
 	
-	// 获取bean  记录操作日志接口
-	private static ILogSysStatemService logSysStatemService;
-	
-	public void init(){
-		logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
-	}
 	
 	public MainWindow() {
 		super();
@@ -142,7 +142,8 @@ public class MainWindow extends JFrame {
 			setTitle("串口通信");
 			
 			
-	        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/java/bros/manage/main/logo.jpeg"); 
+	        Image icon = Toolkit.getDefaultToolkit().getImage("img/logo.jpeg"); 
+	        System.out.println(Toolkit.getDefaultToolkit());
 	        this.setIconImage(icon);
 
 		} catch (Exception e) {
@@ -418,7 +419,12 @@ public class MainWindow extends JFrame {
 	
 	
 	private void stopTelegram() {
-		
+		if(sl!=null){
+			//停止报文处理线程
+			sl.stopHandle();
+			//清空报文缓存
+			sl.clearBuffer();
+		}
 		// 组装正常记录日志入参（电报收发系统接收发送状态改变日志）
 		Map<String, Object> stopTelegramMap = new HashMap<String, Object>();
 		// 系统操作类型
@@ -468,6 +474,8 @@ public class MainWindow extends JFrame {
 
 	private void startTelegram(){
 		try {
+			
+			
 			// 开始发报清屏
 			MainWindow.recieveBoard.setText(new String(""));
 			
@@ -540,9 +548,15 @@ public class MainWindow extends JFrame {
 				MainWindow.mainBoard.addMsg("请先设置收发报参数。", LocalBoard.INFO_SYSTEM);
 				return false;
 			}
-			sp = SerialPortManager.openPort(serialParameters);
-			SerialListener sl = new SerialListener(sp);
+			if(null==sp){
+				sp = SerialPortManager.openPort(serialParameters);
+			}
+			InputStream inputStream = sp.getInputStream();
+			if(null==sl){
+				sl = new SerialListener(inputStream);
+			}
 			SerialPortManager.addListener(sp, sl);
+			sl.start();
 			//启动发送电报线程
 			startSendThread();
 		} catch (SerialPortParameterFailure e) {
@@ -560,6 +574,9 @@ public class MainWindow extends JFrame {
 		} catch (TooManyListeners e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 		return true;
@@ -570,8 +587,15 @@ public class MainWindow extends JFrame {
 	public static void main(String[] args) throws ServiceException {
 		
 		// 加载sping容器
-		SpringApplication.run(NetUnionManageApplication.class, args);
+		try{
+			SpringApplication.run(NetUnionManageApplication.class, args);
+			new MainWindow();
+		}catch(Exception e){
+			throw new ServiceException();
+		}
 		
+		
+		DataSourceContextHolder.setDBType("default");
 		
 		// 组装正常记录日志入参（数据库参数设置）
 		Map<String, Object> saveLaunchLogMap = new HashMap<String, Object>();
@@ -581,15 +605,8 @@ public class MainWindow extends JFrame {
 		saveLaunchLogMap.put("delaIp", DeviceInfo.getDeviceIp());
 		// 操作机器MAC
 		saveLaunchLogMap.put("delaMac", DeviceInfo.getDeviceMAC());
-		
+		ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
 		try {
-//			new MainWindow("串口调试助手");
-//			SwingUtilities.invokeLater(new Runnable() {
-//	            @Override
-//	            public void run() {
-//	            	new MainWindow("串口调试助手");
-//	            }
-//	        });
 			
 			// 日志描述
 			saveLaunchLogMap.put("logMemo", "无");
@@ -608,6 +625,7 @@ public class MainWindow extends JFrame {
 			// 日志等级
 			saveLaunchLogMap.put("logGrade", "1");
 			// 数据库参数设置界面, 记录系统状态日志
+			
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
 			e.printStackTrace();
 		}

@@ -53,11 +53,10 @@ public class SerialSendThread extends Thread {
 					contextMap.put("tel_id", tel_id);
 					// 执行更新操作
 					itelSendQueueService.updateTelSendInfo(contextMap);
-					Thread.sleep(2000);
 				}else {
 					MainWindow.sendBoard.append("数据库中暂时没有待发送电报" + "\r\n");
 				}
-				
+				Thread.sleep(2000);
 			} catch (SendDataToSerialPortFailure e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
