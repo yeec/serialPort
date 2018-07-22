@@ -4,6 +4,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import bros.manage.business.service.ITelSendQueueService;
 import bros.manage.main.MainWindow;
@@ -30,14 +32,13 @@ public class SerialSendThread extends Thread {
 	@Override
 	public void run() {
 		while(runbit){
-			
 			// 获取ben
 			ITelSendQueueService itelSendQueueService = (ITelSendQueueService) SpringUtil.getBean("telSendQueueService");
 			// 待发送列表List
 			List<Map<String, Object>> queryTeleInfoList = itelSendQueueService.queryTelSendInfo();
 			
 			//从数据库查询记录
-//			String tele = "ZCZC BZY0120 080311FF ZBAAZPZX080311 ZGGGZPZX (DEP-CCA1501/A1234-ZBAA0100-ZGGG-0)NNNN";
+//					String tele = "ZCZC BZY0120 080311FF ZBAAZPZX080311 ZGGGZPZX (DEP-CCA1501/A1234-ZBAA0100-ZGGG-0)NNNN";
 			try {
 				
 				if(null != queryTeleInfoList && queryTeleInfoList.size() > 0){
@@ -70,6 +71,7 @@ public class SerialSendThread extends Thread {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+					
 		}
 	}
 	/**

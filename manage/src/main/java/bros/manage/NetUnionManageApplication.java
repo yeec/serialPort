@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -11,6 +12,7 @@ import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.dynamic.datasource.DataSourceContextHolder;
 import bros.manage.exception.ServiceException;
 import bros.manage.main.MainWindow;
+import bros.manage.util.DataBaseUtil;
 import bros.manage.util.DeviceInfo;
 import bros.manage.util.SpringUtil;
 
@@ -18,7 +20,11 @@ import bros.manage.util.SpringUtil;
 public class NetUnionManageApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(NetUnionManageApplication.class, args);
+//		SpringApplication.run(NetUnionManageApplication.class, args);
+		SpringApplication newRun= new SpringApplication(NetUnionManageApplication.class); 
+		newRun.setBannerMode(Mode.OFF);
+		newRun.run(args);
+		
 //		new MainWindow();
 //		try{
 //			log();

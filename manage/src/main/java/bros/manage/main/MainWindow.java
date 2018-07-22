@@ -3,6 +3,7 @@ package bros.manage.main;
 import gnu.io.SerialPort;
 
 import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
@@ -30,6 +31,8 @@ import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
 
 import com.alibaba.druid.pool.DruidDataSource;
@@ -42,19 +45,22 @@ import bros.manage.dynamic.datasource.DataSourceContextHolder;
 import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
-import bros.manage.telegraph.SerialListener;
+import bros.manage.telegraph.SerialListener_bak;
 import bros.manage.telegraph.SerialSendThread;
 import bros.manage.telegraph.exception.NoSuchPort;
 import bros.manage.telegraph.exception.NotASerialPort;
 import bros.manage.telegraph.exception.PortInUse;
 import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
+import bros.manage.util.DataBaseUtil;
 import bros.manage.util.DeviceInfo;
 import bros.manage.util.SpringUtil;
 
 // 程序主窗口界面初始化
 //@SpringBootApplication
 public class MainWindow extends JFrame {
+	
+	private static final Log logger = LogFactory.getLog(MainWindow.class);
 
 	// 创建一个菜单栏
 	private JMenuBar jMenuBar1;
@@ -70,6 +76,10 @@ public class MainWindow extends JFrame {
 	private JMenuItem exitMenuItem;
 	// 创建一个菜单项（参数设置）
 	private JMenuItem configMenuItem;
+	// 创建一个菜单项（清除左屏）
+	private JMenuItem clearLeftScreen;
+	// 创建一个菜单项（清除左屏）
+	private JMenuItem clearRightScreen;
 	// JSeparator类是一种特殊的组件，他在JMenu上提供分隔符
 	private JSeparator jSeparator2;
 	// JScrollPane是带有滚动条的面板
@@ -97,7 +107,7 @@ public class MainWindow extends JFrame {
 	//发送电报线程
 	private SerialSendThread thread;
 	//串口监听
-	private SerialListener sl;
+	private SerialListener_bak sl;
 
 	// 文本区域对象
 	public static JTextArea recieveBoard, sendBoard;
@@ -142,7 +152,7 @@ public class MainWindow extends JFrame {
 			setTitle("串口通信");
 			
 			
-	        Image icon = Toolkit.getDefaultToolkit().getImage("img/logo.jpeg"); 
+	        Image icon = Toolkit.getDefaultToolkit().getImage("src/main/resources/img/logo.png"); 
 	        System.out.println(Toolkit.getDefaultToolkit());
 	        this.setIconImage(icon);
 
@@ -218,6 +228,30 @@ public class MainWindow extends JFrame {
 				public void actionPerformed(ActionEvent evt) {
 					// 参数设置
 					configMenuItemActionPerformed(evt);
+				}
+			});
+			
+			
+			// 创建一个菜单项（清除左屏）
+			
+			clearLeftScreen = new JMenuItem();
+			jMenu4.add(clearLeftScreen);
+			clearLeftScreen.setText("清空左屏");
+			clearLeftScreen.setFont(new java.awt.Font("Dialog", 1, 18));
+			clearLeftScreen.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					clearLeftScreenActionPerformed(evt);
+				}
+			});
+			
+			// 创建一个菜单项（清除左屏）
+			clearRightScreen = new JMenuItem();
+			jMenu4.add(clearRightScreen);
+			clearRightScreen.setText("清空右屏");
+			clearRightScreen.setFont(new java.awt.Font("Dialog", 1, 18));
+			clearRightScreen.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
+					clearRightScreenActionPerformed(evt);
 				}
 			});
 
@@ -335,6 +369,21 @@ public class MainWindow extends JFrame {
 			e.printStackTrace();
 		}
 	}
+	
+	/**
+	 * 清空左屏
+	 * @param evt
+	 */
+	private void clearLeftScreenActionPerformed(ActionEvent evt){
+		MainWindow.recieveBoard.setText(new String(""));
+	}
+	/**
+	 * 清空右屏
+	 * @param evt
+	 */
+	private void clearRightScreenActionPerformed(ActionEvent evt){
+		MainWindow.sendBoard.setText(new String(""));
+	}
 
 	/**
 	 * 参数设置
@@ -362,8 +411,13 @@ public class MainWindow extends JFrame {
 	 */
 	private void exitMenuItemActionPerformed(ActionEvent evt) {
 		this.dispose();
-		stopTelegram();
-		System.exit(0);
+		try{
+			stopTelegram();
+		}catch(Exception e){
+			logger.error("系统退出异常",e);
+		}finally{
+			System.exit(0);
+		}
 	}
 
 	/**
@@ -439,11 +493,12 @@ public class MainWindow extends JFrame {
 		try {
 			//停止发送电报线程
 			stopSendThread();
-			
-			SerialPortManager.closePort(sp);
+			// 删除监听器
+			SerialPortManager.removeListener(sp);
+			// 关闭监听端口
+			sp = SerialPortManager.closePort(sp);
 			
 			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
-			
 			
 			// 日志描述
 			stopTelegramMap.put("logMemo", "无");
@@ -475,6 +530,11 @@ public class MainWindow extends JFrame {
 	private void startTelegram(){
 		try {
 			
+			if(!DataBaseUtil.checkDBState("default")){
+				MainWindow.mainBoard.addMsg("数据库参数配置错误,请检查配置!", LocalBoard.INFO_SYSTEM);
+				JOptionPane.showMessageDialog(this, "数据库参数配置错误,请检查配置!");
+				return;
+			}
 			
 			// 开始发报清屏
 			MainWindow.recieveBoard.setText(new String(""));
@@ -520,7 +580,13 @@ public class MainWindow extends JFrame {
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
 			}
 		} catch (ServiceException e) {
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg(e.getErrorMsg(), LocalBoard.INFO_SYSTEM);
+			JOptionPane.showMessageDialog(this, e.getErrorMsg());
+			logger.error("收发报初始化异常", e);
+		} catch (HeadlessException e) {
+			logger.error("收发报初始化异常", e);
+		} catch (Exception e) {
+			logger.error("收发报初始化异常", e);
 		}
 	}
 	
@@ -532,9 +598,6 @@ public class MainWindow extends JFrame {
 	
 	private void stopSendThread(){
 		if(null!=thread){
-			if(!thread.isAlive()){
-				thread.notify();
-			}
 			thread.stopSafely();
 			thread.stop();
 			MainWindow.mainBoard.addMsg("发送电报线程停止.", LocalBoard.INFO_SYSTEM);
@@ -552,9 +615,7 @@ public class MainWindow extends JFrame {
 				sp = SerialPortManager.openPort(serialParameters);
 			}
 			InputStream inputStream = sp.getInputStream();
-			if(null==sl){
-				sl = new SerialListener(inputStream);
-			}
+			sl = new SerialListener_bak(inputStream);
 			SerialPortManager.addListener(sp, sl);
 			sl.start();
 			//启动发送电报线程

@@ -373,7 +373,8 @@ public class JDialogOptions extends javax.swing.JDialog {
 			}
 		}
 		
-//		jComboBoxPortName.setSelectedItem(serialParameters.getPortName());
+		serialParameters.setPortName((String)jComboBoxPortName.getItemAt(0));
+		jComboBoxPortName.setSelectedItem(serialParameters.getParityString());
 		jComboBoxDatabits.setSelectedItem(serialParameters.getDatabitsString());
 		jComboBoxBaudRate.setSelectedItem(serialParameters.getBaudRateString());
 		jComboBoxParity.setSelectedItem(serialParameters.getParityString());
@@ -386,7 +387,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 		
 		Map<String, Object> dbMap;
 		try {
-			dbMap = PropertiesUtil.getDBPropertiesInfo();
+			dbMap = PropertiesUtil.getDBPropertiesDiskInfo();
 			jTextFieldServerAddress.setText((String) dbMap.get("ip"));
 			jTextFieldServerPort.setText((String) dbMap.get("port"));
 			jTextFieldUsername.setText((String) dbMap.get("username"));
@@ -430,13 +431,13 @@ public class JDialogOptions extends javax.swing.JDialog {
 			 * 创建动态数据源
 			 */
 			Map<Object, Object> dataSourceMap = DynamicDataSource.getInstance().getDataSourceMap();
-			dataSourceMap.put("dynamic-slave", dynamicDataSource);
+			dataSourceMap.put("default", dynamicDataSource);
 			DynamicDataSource.getInstance().setTargetDataSources(dataSourceMap);
 			
 			/**
 			 * 切换为动态数据源实例
 			 */
-			DataSourceContextHolder.setDBType("dynamic-slave");
+			DataSourceContextHolder.setDBType("default");
 			
 			Map<String, Object> dbMap = new HashMap<String, Object>();
 			dbMap.put("ip", ip);

@@ -104,13 +104,13 @@ public class SerialPortManager {
 	 * 
 	 * @param serialport 待关闭的串口对象
 	 */
-	public static void closePort(SerialPort serialPort) {
+	public static SerialPort closePort(SerialPort serialPort) {
 		if (serialPort != null) {
 			serialPort.close();
 			MainWindow.mainBoard.addMsg("串口已关闭.", LocalBoard.INFO_SYSTEM);
 			MainWindow.serialPortStatus.setBackground(new java.awt.Color(255,0,0));
-			serialPort = null;
 		}
+		return null;
 	}
 
 	/**
@@ -213,6 +213,13 @@ public class SerialPortManager {
 		} catch (TooManyListenersException e) {
 			throw new TooManyListeners();
 		}
+	}
+	
+	/**
+	 * @param port
+	 */
+	public static void removeListener(SerialPort port){
+		port.removeEventListener();
 	}
 
 }
