@@ -22,3 +22,7 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+/2018-07-21.txt
+/2018-07-22.txt
+/2018-07-23.txt
+/DBpropertiesdb.properties
