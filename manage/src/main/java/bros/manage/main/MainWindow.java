@@ -45,6 +45,7 @@ import bros.manage.dynamic.datasource.DataSourceContextHolder;
 import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
+import bros.manage.telegraph.SerialListener;
 import bros.manage.telegraph.SerialListener_bak;
 import bros.manage.telegraph.SerialSendThread;
 import bros.manage.telegraph.exception.NoSuchPort;
@@ -107,7 +108,7 @@ public class MainWindow extends JFrame {
 	//发送电报线程
 	private SerialSendThread thread;
 	//串口监听
-	private SerialListener_bak sl;
+	private SerialListener sl;
 
 	// 文本区域对象
 	public static JTextArea recieveBoard, sendBoard;
@@ -615,7 +616,7 @@ public class MainWindow extends JFrame {
 				sp = SerialPortManager.openPort(serialParameters);
 			}
 			InputStream inputStream = sp.getInputStream();
-			sl = new SerialListener_bak(inputStream);
+			sl = new SerialListener(sp);
 			SerialPortManager.addListener(sp, sl);
 			sl.start();
 			//启动发送电报线程

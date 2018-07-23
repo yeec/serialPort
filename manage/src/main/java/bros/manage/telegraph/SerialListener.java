@@ -1,8 +1,10 @@
 package bros.manage.telegraph;
 
+import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.BlockingQueue;
@@ -13,6 +15,7 @@ import org.apache.commons.logging.LogFactory;
 
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
+import bros.manage.util.ArrayUtils;
 import bros.manage.util.DataBaseUtil;
 
 /**
@@ -21,16 +24,18 @@ import bros.manage.util.DataBaseUtil;
  * @author wyc
  *
  */
-public class SerialListener extends Thread implements
-		SerialPortEventListener {
+public class SerialListener extends Thread implements SerialPortEventListener {
 
-	private static final Log logger = LogFactory
-			.getLog(SerialListener.class);
+	private static final Log logger = LogFactory.getLog(SerialListener.class);
 	InputStream inputStream; // 从串口来的输入流
+	SerialPort port;
+	private StringBuffer linkWgt ;//存放获取的数据
 
-	public SerialListener(InputStream inputStream) {
-		this.inputStream = inputStream;
+	public SerialListener(SerialPort port) throws IOException {
+		this.port = port;
+		this.inputStream = new BufferedInputStream(port.getInputStream());
 	}
+	
 
 	// private BlockingQueue<String> msgQueue = new
 	// LinkedBlockingQueue<String>();
@@ -95,10 +100,8 @@ public class SerialListener extends Thread implements
 	/**
 	 * 处理监控到的串口事件
 	 */
-	public void serialEvent(SerialPortEvent serialPortEvent) {
-		int newData = 0;
-		byte bRead[] = { 0 };
-		String sSubStr = "";
+	/*public void serialEvent(SerialPortEvent serialPortEvent) {
+		
 		switch (serialPortEvent.getEventType()) {
 		case SerialPortEvent.BI: // 10 通讯中断
 			MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
@@ -128,46 +131,40 @@ public class SerialListener extends Thread implements
 			MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
 			break;
 		case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
-
-			while (newData != -1) {
-				try {
-					// inStream = serialPort.getInputStream();
-					newData = inputStream.read();
-					if (newData == -1) {
-						break;
+			
+			InputStream is = null;
+			byte[] bytes = {};
+			try {
+				is = port.getInputStream();
+				byte[] readBuffer = new byte[1];
+				int byteNums = is.read(readBuffer);
+				while(byteNums>0){
+					bytes = ArrayUtils.concat(bytes, readBuffer);
+					readBuffer = new byte[1];
+					byteNums = is.read(readBuffer);
+				}
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}finally{
+				try{
+					if(is!=null){
+						is.close();
+						is = null;
 					}
-
-					// 把0~255的int转换成两位的16进制字符串
-					sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
-					System.out.println(sSubStr);
-					// System.out.println(sSubStr);
-					sb.append(sSubStr);
-
-				} catch (IOException ex) {
-					System.err.println(ex);
-					return;
+				}catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
-			/*try {
-				System.out.println("sb 提取命令前----start-----"+ sb.toString() + "----end-----");
-				while (sb.indexOf("a55a") != -1) {
-					sb.delete(0, sb.indexOf("a55a"));
-					if (sb.indexOf("9191910000") == -1) {
-						System.out.println("该命令内容错误!" + sb);
-					} else {
-						sCommand = sb.substring(0,sb.indexOf("9191910000"));
-						sb.delete(0, sb.indexOf("9191910000"));
-						System.out.println("sCommand ----start-----" + sCommand+ "----end-----");
-						recvCommand.analyze(sCommand);
-					}
-				}
-			} catch (Exception ew) {
-				ew.printStackTrace();
-			} finally {
-			}*/
+			msgQueue.add(new String(bytes));
+			System.out.println(new String(bytes));
+			
+			
 			break;
 		}
-	}
+	}*/
 
 	public String process(InputStream in, String charset) {
 		byte[] buf = new byte[1024];
@@ -231,5 +228,62 @@ public class SerialListener extends Thread implements
 			logger.error("处理接收电报队列线程异常", e);
 		}
 	}
+	
+	
+	
+    
+    //实现监听方法
+    public void serialEvent(SerialPortEvent e){
+        int newData = 0;
+        byte bRead[] = {0};
+        String sSubStr = "";
+        linkWgt = new StringBuffer();
+        // Determine type of event.
+        switch (e.getEventType()) {
+        // Read data until -1 is returned. If \r is received substitute
+            // \n for correct newline handling.
+            case SerialPortEvent.DATA_AVAILABLE:
+                while (newData != -1) {
+                    try {
+                        //inStream = serialPort.getInputStream();
+                        newData = inputStream.read();
+                        if (newData == -1) {
+                            break;
+                        }
+                        if ('\r' == (char)newData) {
+                        } else {
+                            //把0~255的int转换成两位的16进制字符串
+                            sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
+                            //System.out.println(sSubStr);
+                            linkWgt.append(sSubStr);
+                        }
+                    } catch (IOException ex) {
+                        System.err.println(ex);
+                        return;
+                    }
+                }
+             try{
+                System.out.println("linkWgt 提取命令前----start-----" + linkWgt.toString() + "----end-----");
+                /*while(linkWgt.indexOf("a55a") != -1) {
+                    linkWgt.delete(0,linkWgt.indexOf("a55a"));
+                    if(linkWgt.indexOf("9191910000") == -1)
+                    {
+                        System.out.println("该命令内容错误!" + linkWgt);
+                    } else {
+                        sCommand =linkWgt.substring(0, linkWgt.indexOf("9191910000"));
+                        linkWgt.delete(0,linkWgt.indexOf("9191910000"));
+                        System.out.println("sCommand ----start-----" + sCommand + "----end-----");
+                    }
+                }*/
+             }catch(Exception ew){
+                 ew.printStackTrace();
+             }finally{
+             }
+            break;
+            // If break event append BREAK RECEIVED message.
+            case SerialPortEvent.BI:
+                System.out.println("\n--- BREAK RECEIVED ---\n");
+        }
+    }
 }
 
