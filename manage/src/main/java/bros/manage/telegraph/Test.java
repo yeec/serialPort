@@ -3,14 +3,18 @@ package bros.manage.telegraph;
 public class Test {
 
 	public static void main(String[] args) {
-		String s = "SOH345345SOHZCZCETXhhETXNNN";
+		long startTime = System.currentTimeMillis();
+		String s = "ZCZC345345SOHZCZCETXhhETXNNNN";
 		String str = getTele(s);
 		System.out.println(str);
+		System.out.println(System.currentTimeMillis() - startTime);
 		
 
 	}
 	
 	public static String getTele(String s){
+		
+		StringBuilder ss = new StringBuilder();
 		boolean flag = true;
 		while(flag){
 			int a = s.lastIndexOf("ZCZC");
@@ -19,6 +23,8 @@ public class Test {
 				int b = s.lastIndexOf("NNNN");
 				s = s.substring(a, b);
 				if(s.indexOf("NNNN")==-1){
+					ss.append(s);
+					ss.append("NNNN");
 					s = s + "NNNN";
 					flag = false;
 					continue;
@@ -28,6 +34,8 @@ public class Test {
 				s = s.substring(c, d);
 				if(s.indexOf("ETX")==-1){
 					s = s + "ETX";
+					ss.append(s);
+					ss.append("ETX");
 					flag = false;
 					continue;
 				}
