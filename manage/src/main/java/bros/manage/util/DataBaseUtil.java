@@ -71,9 +71,11 @@ public class DataBaseUtil {
 				flag = true;
 			}
 		} catch(GetConnectionTimeoutException gte){
+			MainWindow.mainBoard.addMsg("数据库连接超时,请检查数据库配置!", LocalBoard.INFO_SYSTEM);
 			defaultDataSource.close();
 			throw new ServiceException("EBNT0000", "数据库连接超时,请检查数据库配置");
 		}catch (SQLException e) {
+			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
 			logger.error("检查数据库状态失败", e);
 			throw new ServiceException("EBNT0000", "检查数据库状态失败");
 		}

@@ -267,23 +267,23 @@ public class MainWindow extends JFrame {
 			jButtonStart.setText("开始收发报");
 			jButtonStart.setBounds(550, 570, 130, 30);
 			jButtonStart.setFont(new java.awt.Font("Dialog", 1, 18));
-			jButtonStart.addMouseListener(new MouseAdapter() {
-				public void mouseClicked(MouseEvent evt) {
+			jButtonStart.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
 					// 开始收发报
-					jButtonStartMouseClicked(evt);
+					startActionPerformed(evt);
 				}
 			});
-
+			
 			jButtonStop = new JButton();
 			this.getContentPane().add(jButtonStop);
 			jButtonStop.setText("停止收发报");
 			jButtonStop.setEnabled(false);
 			jButtonStop.setBounds(700, 570, 130, 30);
 			jButtonStop.setFont(new java.awt.Font("Dialog", 1, 18));
-			jButtonStop.addMouseListener(new MouseAdapter() {
-				public void mouseClicked(MouseEvent evt) {
+			jButtonStop.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
 					// 停止收发报
-					jButtonStopMouseClicked(evt);
+					stopActionPerformed(evt);
 				}
 			});
 
@@ -292,10 +292,10 @@ public class MainWindow extends JFrame {
 			jButtonConfig.setText("参数设置");
 			jButtonConfig.setBounds(400, 570, 130, 30);
 			jButtonConfig.setFont(new java.awt.Font("Dialog", 1, 18));
-			jButtonConfig.addMouseListener(new MouseAdapter() {
-				public void mouseClicked(MouseEvent evt) {
+			jButtonConfig.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent evt) {
 					// 参数设置
-					jButtonConfigMouseClicked(evt);
+					configMenuItemActionPerformed(evt);
 				}
 			});
 
@@ -366,6 +366,7 @@ public class MainWindow extends JFrame {
 			jScrollPane3.setViewportView(sendBoard);
 			sendBoard.setFont(new java.awt.Font("Dialog", 1, 18));
 			sendBoard.setEditable(false);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -532,7 +533,6 @@ public class MainWindow extends JFrame {
 		try {
 			
 			if(!DataBaseUtil.checkDBState("default")){
-				MainWindow.mainBoard.addMsg("数据库参数配置错误,请检查配置!", LocalBoard.INFO_SYSTEM);
 				JOptionPane.showMessageDialog(this, "数据库参数配置错误,请检查配置!");
 				return;
 			}
@@ -550,8 +550,6 @@ public class MainWindow extends JFrame {
 			startTelegramMap.put("delaMac", DeviceInfo.getDeviceMAC());
 			ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
 			if (!initSP()) {
-				JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
-				serialParameters = new JDialogOptions(this).getSerialParameters();
 				// 日志描述
 				String logMemo = "电报收发系统接收初始化失败, 错误信息:" + (new IllegalStateException("初始化失败"));
 				startTelegramMap.put("logMemo", logMemo);
@@ -581,7 +579,6 @@ public class MainWindow extends JFrame {
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
 			}
 		} catch (ServiceException e) {
-			MainWindow.mainBoard.addMsg(e.getErrorMsg(), LocalBoard.INFO_SYSTEM);
 			JOptionPane.showMessageDialog(this, e.getErrorMsg());
 			logger.error("收发报初始化异常", e);
 		} catch (HeadlessException e) {
@@ -606,9 +603,10 @@ public class MainWindow extends JFrame {
 	}
 
 	private boolean initSP() {
-
 		try {
 			if(null == serialParameters){
+				JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
+				serialParameters = new JDialogOptions(this).getSerialParameters();
 				MainWindow.mainBoard.addMsg("请先设置收发报参数。", LocalBoard.INFO_SYSTEM);
 				return false;
 			}
@@ -631,8 +629,9 @@ public class MainWindow extends JFrame {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (PortInUse e) {
-			// TODO Auto-generated catch block
+			MainWindow.mainBoard.addMsg(e.toString(), LocalBoard.INFO_SYSTEM);
 			e.printStackTrace();
+			return false;
 		} catch (TooManyListeners e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -652,12 +651,19 @@ public class MainWindow extends JFrame {
 		try{
 			SpringApplication.run(NetUnionManageApplication.class, args);
 			new MainWindow();
+			
+			if(!DataBaseUtil.checkDBState("default")){
+				MainWindow.mainBoard.addMsg("数据库参数配置错误,请检查配置!", LocalBoard.INFO_SYSTEM);
+				return;
+			}
 		}catch(Exception e){
 			throw new ServiceException();
 		}
 		
 		
 		DataSourceContextHolder.setDBType("default");
+		
+		
 		
 		// 组装正常记录日志入参（数据库参数设置）
 		Map<String, Object> saveLaunchLogMap = new HashMap<String, Object>();

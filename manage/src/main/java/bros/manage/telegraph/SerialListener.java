@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
+import bros.manage.util.ArrayUtils;
 import bros.manage.util.DataBaseUtil;
 import gnu.io.SerialPort;
 import gnu.io.SerialPortEvent;
@@ -95,39 +96,123 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	/**
 	 * 处理监控到的串口事件
 	 */
-	/*
-	 * public void serialEvent(SerialPortEvent serialPortEvent) {
-	 * 
-	 * switch (serialPortEvent.getEventType()) { case SerialPortEvent.BI: // 10 通讯中断
-	 * MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM); break; case
-	 * SerialPortEvent.OE: // 7 溢位（溢出）错误 MainWindow.mainBoard.addMsg("溢位（溢出）错误",
-	 * LocalBoard.INFO_SYSTEM); break; case SerialPortEvent.FE: // 9 帧错误
-	 * MainWindow.mainBoard.addMsg("帧错误", LocalBoard.INFO_SYSTEM); break; case
-	 * SerialPortEvent.PE: // 8 奇偶校验错误 MainWindow.mainBoard.addMsg("帧错误奇偶校验错误",
-	 * LocalBoard.INFO_SYSTEM); break; case SerialPortEvent.CD: // 6 载波检测
-	 * MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM); break; case
-	 * SerialPortEvent.CTS: // 3 清除待发送数据 MainWindow.mainBoard.addMsg("载波检测",
-	 * LocalBoard.INFO_SYSTEM); break; case SerialPortEvent.DSR: // 4 待发送数据准备好了
-	 * MainWindow.mainBoard.addMsg("待发送数据准备好了", LocalBoard.INFO_SYSTEM); break; case
-	 * SerialPortEvent.RI: // 5 振铃指示 MainWindow.mainBoard.addMsg("振铃指示",
-	 * LocalBoard.INFO_SYSTEM); break; case SerialPortEvent.OUTPUT_BUFFER_EMPTY: //
-	 * 2 输出缓冲区已清空 MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
-	 * break; case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
-	 * 
-	 * InputStream is = null; byte[] bytes = {}; try { is = port.getInputStream();
-	 * byte[] readBuffer = new byte[1]; int byteNums = is.read(readBuffer);
-	 * while(byteNums>0){ bytes = ArrayUtils.concat(bytes, readBuffer); readBuffer =
-	 * new byte[1]; byteNums = is.read(readBuffer); }
-	 * 
-	 * } catch (IOException e) { // TODO Auto-generated catch block
-	 * e.printStackTrace(); }finally{ try{ if(is!=null){ is.close(); is = null; }
-	 * }catch (IOException e) { // TODO Auto-generated catch block
-	 * e.printStackTrace(); } } msgQueue.add(new String(bytes));
-	 * System.out.println(new String(bytes));
-	 * 
-	 * 
-	 * break; } }
-	 */
+	
+	public void serialEvent(SerialPortEvent serialPortEvent) {
+		
+
+		switch (serialPortEvent.getEventType()) {
+			case SerialPortEvent.BI: // 10 通讯中断
+				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.OE: // 7 溢位（溢出）错误
+				MainWindow.mainBoard.addMsg("溢位（溢出）错误", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.FE: // 9 帧错误
+				MainWindow.mainBoard.addMsg("帧错误", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.PE: // 8 奇偶校验错误
+				MainWindow.mainBoard.addMsg("帧错误奇偶校验错误", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.CD: // 6 载波检测
+				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.CTS: // 3 清除待发送数据
+				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.DSR: // 4 待发送数据准备好了
+				MainWindow.mainBoard.addMsg("待发送数据准备好了", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.RI: // 5 振铃指示
+				MainWindow.mainBoard.addMsg("振铃指示", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.OUTPUT_BUFFER_EMPTY: // 2 输出缓冲区已清空
+				MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
+				byte[] readBuffer = new byte[1];
+	            try {
+	                int numBytes = -1;
+	                while (inputStream.available() > 0) {
+	                    numBytes = inputStream.read(readBuffer);
+	                    logger.info(new String(readBuffer));
+
+	                    if (numBytes > 0) {
+	                        msgQueue.add(new String(readBuffer));
+	                        readBuffer = new byte[1];// 重新构造缓冲对象，否则有可能会影响接下来接收的数据
+	                    } else {
+	                        msgQueue.add("额------没有读到数据");
+	                    }
+	                }
+	            } catch (IOException e) {
+	            	logger.error("接收出口数据异常", e);
+	            }
+				break;
+		}
+	
+		/*
+
+			switch (serialPortEvent.getEventType()) {
+			case SerialPortEvent.BI: // 10 通讯中断
+				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.OE: // 7 溢位（溢出）错误
+				MainWindow.mainBoard.addMsg("溢位（溢出）错误", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.FE: // 9 帧错误
+				MainWindow.mainBoard.addMsg("帧错误", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.PE: // 8 奇偶校验错误
+				MainWindow.mainBoard.addMsg("帧错误奇偶校验错误", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.CD: // 6 载波检测
+				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.CTS: // 3 清除待发送数据
+				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.DSR: // 4 待发送数据准备好了
+				MainWindow.mainBoard.addMsg("待发送数据准备好了", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.RI: // 5 振铃指示
+				MainWindow.mainBoard.addMsg("振铃指示", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.OUTPUT_BUFFER_EMPTY: // 2 输出缓冲区已清空
+				MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
+				break;
+			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
+	
+				InputStream is = null;
+				byte[] bytes = {};
+				try {
+					is = port.getInputStream();
+					byte[] readBuffer = new byte[1];
+					int byteNums = is.read(readBuffer);
+					while (byteNums > 0) {
+						bytes = ArrayUtils.concat(bytes, readBuffer);
+						readBuffer = new byte[1];
+						byteNums = is.read(readBuffer);
+					}
+	
+				} catch (IOException e) { // TODO Auto-generated catch block
+					e.printStackTrace();
+				} finally {
+					try {
+						if (is != null) {
+							is.close();
+							is = null;
+						}
+					} catch (IOException e) { // TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				msgQueue.add(new String(bytes));
+				System.out.println(new String(bytes));
+	
+				break;
+			}
+	*/
+		}
+	 
 
 	public String process(InputStream in, String charset) {
 		byte[] buf = new byte[1024];
@@ -184,54 +269,55 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	}
 
 	// 实现监听方法
-	public void serialEvent(SerialPortEvent e) {
-		int newData = 0;
-		byte bRead[] = { 0 };
-		String sSubStr = "";
-		linkWgt = new StringBuilder();
-		// Determine type of event.
-		switch (e.getEventType()) {
-		// Read data until -1 is returned. If \r is received substitute
-		// \n for correct newline handling.
-		case SerialPortEvent.DATA_AVAILABLE:
-			while (newData != -1) {
-				try {
-					// inStream = serialPort.getInputStream();
-					newData = inputStream.read();
-					if (newData == -1) {
-						break;
-					}
-					if ('\r' == (char) newData) {
-					} else {
-						// 把0~255的int转换成两位的16进制字符串
-						sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
-						// System.out.println(sSubStr);
-						linkWgt.append(sSubStr);
-					}
-				} catch (IOException ex) {
-					System.err.println(ex);
-					return;
-				}
-			}
-			try {
-				System.out.println("linkWgt 提取命令前----start-----" + linkWgt.toString() + "----end-----");
-				/*
-				 * while(linkWgt.indexOf("a55a") != -1) {
-				 * linkWgt.delete(0,linkWgt.indexOf("a55a")); if(linkWgt.indexOf("9191910000")
-				 * == -1) { System.out.println("该命令内容错误!" + linkWgt); } else { sCommand
-				 * =linkWgt.substring(0, linkWgt.indexOf("9191910000"));
-				 * linkWgt.delete(0,linkWgt.indexOf("9191910000"));
-				 * System.out.println("sCommand ----start-----" + sCommand + "----end-----"); }
-				 * }
-				 */
-			} catch (Exception ew) {
-				ew.printStackTrace();
-			} finally {
-			}
-			break;
-		// If break event append BREAK RECEIVED message.
-		case SerialPortEvent.BI:
-			System.out.println("\n--- BREAK RECEIVED ---\n");
-		}
-	}
+//	public void serialEvent(SerialPortEvent e) {
+//		int newData = 0;
+//		byte bRead[] = { 0 };
+//		String sSubStr = "";
+//		linkWgt = new StringBuilder();
+//		// Determine type of event.
+//		switch (e.getEventType()) {
+//		// Read data until -1 is returned. If \r is received substitute
+//		// \n for correct newline handling.
+//		case SerialPortEvent.DATA_AVAILABLE:
+//			while (newData != -1) {
+//				try {
+//					// inStream = serialPort.getInputStream();
+//					newData = inputStream.read();
+//					if (newData == -1) {
+//						break;
+//					}
+//					if ('\r' == (char) newData) {
+//					} else {
+//						// 把0~255的int转换成两位的16进制字符串
+//						sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
+//						// System.out.println(sSubStr);
+//						linkWgt.append(sSubStr);
+//						
+//					}
+//				} catch (IOException ex) {
+//					System.err.println(ex);
+//					return;
+//				}
+//			}
+//			try {
+//				System.out.println("linkWgt 提取命令前----start-----" + linkWgt.toString() + "----end-----");
+//				/*
+//				 * while(linkWgt.indexOf("a55a") != -1) {
+//				 * linkWgt.delete(0,linkWgt.indexOf("a55a")); if(linkWgt.indexOf("9191910000")
+//				 * == -1) { System.out.println("该命令内容错误!" + linkWgt); } else { sCommand
+//				 * =linkWgt.substring(0, linkWgt.indexOf("9191910000"));
+//				 * linkWgt.delete(0,linkWgt.indexOf("9191910000"));
+//				 * System.out.println("sCommand ----start-----" + sCommand + "----end-----"); }
+//				 * }
+//				 */
+//			} catch (Exception ew) {
+//				ew.printStackTrace();
+//			} finally {
+//			}
+//			break;
+//		// If break event append BREAK RECEIVED message.
+//		case SerialPortEvent.BI:
+//			System.out.println("\n--- BREAK RECEIVED ---\n");
+//		}
+//	}
 }
