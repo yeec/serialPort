@@ -129,6 +129,8 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 				MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
 				break;
 			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
+				//记录最后一次电报时间
+				DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
 				byte[] readBuffer = new byte[1];
 	            try {
 	                int numBytes = -1;
@@ -252,6 +254,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 							count++;
 							MainWindow.recieveBoard.append("第" + count + "次电报:" + result + "\r\n");
 							DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "NNNN" : "SOH");
+							DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
 							MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
 							if (MainWindow.serialPortStatus.getBackground().getRed() == 0) {
 								MainWindow.serialPortStatus.setBackground(new java.awt.Color(255, 0, 0));

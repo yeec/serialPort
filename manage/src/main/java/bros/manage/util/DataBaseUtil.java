@@ -9,6 +9,8 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import bros.manage.business.service.IJaiJAiltimeService;
+import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.service.ITelReceiveQueueService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DynamicDataSource;
@@ -81,5 +83,73 @@ public class DataBaseUtil {
 		}
 		
 		return flag;
+	}
+	
+	
+	/**
+	 * 记录最后一次接收电报时间
+	 */
+	public static void saveLastReceiveLog(){
+		try {
+			// 获取ben
+			IJaiJAiltimeService jaiJAiltimeService = (IJaiJAiltimeService) SpringUtil.getBean("jaiJAiltimeService");
+			jaiJAiltimeService.addJaiJailtimeinfo();
+		} catch (Exception e) {
+			logger.error("记录数据库失败",e);
+		}
+		
+	}
+	
+	
+	/**
+	 * 记录最后一次接收电报时间
+	 */
+	public static int updateJaiJailtime(String flag){
+		try {
+			Map<String, Object> columMap = new HashMap<String, Object>();
+			columMap.put("colum", flag);
+			// 获取ben
+			IJaiJAiltimeService jaiJAiltimeService = (IJaiJAiltimeService) SpringUtil.getBean("jaiJAiltimeService");
+			int con = jaiJAiltimeService.updateJaiJailtimeinfo(columMap);
+			if(con == 0){ // 没有记录，更新0条，说明数据库没数据，则插入一条数据
+				saveLastReceiveLog();
+			}else if(con < 0){
+				if("TEL_SENDREC_REC_LASTTIME".equals(flag)){ // 更新接收电报时间失败
+					saveLastReceiveStoreErrorLog(true);
+				}else if("TEL_SENDREC_DATABASE_TIME".equals(flag) ){//更新存储电报时间失败
+					saveLastReceiveStoreErrorLog(false);
+				}else if("TEL_SENDREC_DATABASE_TIME".equals(flag)){//更新发送电报时间失败
+					saveLastReceiveStoreErrorLog(false);
+				}
+			}
+		} catch (Exception e) {
+			logger.error("记录数据库失败",e);
+		}
+		return 0;
+	}
+	
+	
+	// 记录最后一次接收电报时间和电报存储时间
+	public static void saveLastReceiveStoreErrorLog(boolean flag){
+		try {
+			ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
+			
+			Map<String,Object> contextMap = new HashMap<String, Object>();
+			
+			contextMap.put("sysDealType", "运行");
+			if(flag){ // 接收
+				contextMap.put("sysState", "接收异常");
+				contextMap.put("logMemo", "记录最后一次电报接收时间异常");
+			}else{ // 存储
+				contextMap.put("sysState", "存储运行");
+				contextMap.put("logMemo", "记录最后一次电报存储时间异常");
+			}
+			contextMap.put("logGrade", "3");
+			contextMap.put("delaIp", DeviceInfo.getDeviceIp());
+			contextMap.put("delaMac", DeviceInfo.getDeviceMAC());
+			logSysStatemService.addLogSysStatemInfo(contextMap);
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
 	}
 }

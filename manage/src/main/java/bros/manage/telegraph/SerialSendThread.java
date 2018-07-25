@@ -12,6 +12,7 @@ import bros.manage.main.MainWindow;
 import bros.manage.main.SerialPortManager;
 import bros.manage.telegraph.exception.SendDataToSerialPortFailure;
 import bros.manage.telegraph.exception.SerialPortOutputStreamCloseFailure;
+import bros.manage.util.DataBaseUtil;
 import bros.manage.util.SpringUtil;
 import gnu.io.SerialPort;
 
@@ -32,6 +33,8 @@ public class SerialSendThread extends Thread {
 	@Override
 	public void run() {
 		while(runbit){
+			DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
+			
 			// 获取ben
 			ITelSendQueueService itelSendQueueService = (ITelSendQueueService) SpringUtil.getBean("telSendQueueService");
 			// 待发送列表List
