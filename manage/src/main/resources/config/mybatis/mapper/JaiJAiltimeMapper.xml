@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="bros.manage.business.mapper.LogSysStatemMapper" >
+
+<mapper namespace="bros.manage.business.mapper.JaiJAiltimeMapper" >
     <!-- 记录监控时间表-->
 	<insert id="insertJaiJailtimeinfo" parameterType="java.util.HashMap">
 		 insert into JAI_T_JAILTIME (
@@ -18,7 +19,7 @@
 			TEL_BEFDEAL_GETTOAUO_LASTTIME, 
 			TEL_BEFDEAL_GETRATEL_LASTTIME, 
 			USERID, 
-			LAST_TIM
+			LAST_TIME
 		 ) values (
 			 '监控', 
 			 sysdate, 
@@ -52,7 +53,7 @@
 			<if test="telSendrecSendLasttime != null and telSendrecSendLasttime != ''">
 				,TEL_SENDREC_SEND_LASTTIME = sysdate
 			</if> -->
-			#{colum} = sysdate
+			${colum} = sysdate
 			WHERE
 		TEL_JAI_NAME = '监控'
 	</update>

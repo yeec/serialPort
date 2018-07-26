@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
 "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="bros.manage.business.mapper.LogSysStatemMapper" >
+<mapper namespace="bros.manage.business.mapper.LogTellogMapper" >
     <!-- 记录电报日志表-->
 	<insert id="insertLogTellogInfo" parameterType="java.util.HashMap">
 		 insert into LOG_T_TELLOG (
@@ -25,8 +25,8 @@
 			 sysdate, 
 			 '电报接收系统', 
 			 #{logFun}, 
-			 #{logType} 
-			 #{logSQL}, 
+			 #{logType},
+			 #{logSQL,javaType=string,jdbcType=VARCHAR}, 
 			 #{logResult}, 
 			 #{logMemo}, 
 			 #{mainKey}, 

@@ -30,6 +30,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
+import javax.swing.text.DefaultCaret;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -329,7 +330,7 @@ public class MainWindow extends JFrame {
 			jScrollPane2 = new JScrollPane();
 			this.getContentPane().add(jScrollPane2);
 			jScrollPane2.setBounds(20, 50, 410, 340);
-
+			
 			// 发送报文显示框
 			jScrollPane3 = new JScrollPane();
 			this.getContentPane().add(jScrollPane3);
@@ -357,15 +358,23 @@ public class MainWindow extends JFrame {
 			jScrollPane2.setViewportView(recieveBoard);
 			recieveBoard.setFont(new java.awt.Font("Dialog", 1, 18));
 			recieveBoard.setEditable(false);
-
+			
+			// 设置滚动条一直在最下面
+			DefaultCaret recieveBoardCaret = (DefaultCaret)recieveBoard.getCaret();
+			recieveBoardCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
+			
 			mainBoard = new LocalBoard();
 			jScrollPane1.setViewportView(mainBoard);
 			mainBoard.setFont(new java.awt.Font("Dialog", 1, 18));
-
+			
 			sendBoard = new JTextArea();
 			jScrollPane3.setViewportView(sendBoard);
 			sendBoard.setFont(new java.awt.Font("Dialog", 1, 18));
 			sendBoard.setEditable(false);
+			
+			// 设置滚动条一直在最下面
+			DefaultCaret sendBoardCaret = (DefaultCaret)sendBoard.getCaret();
+			sendBoardCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

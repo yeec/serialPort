@@ -1,14 +1,20 @@
 package bros.manage.telegraph;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Test {
 
 	public static void main(String[] args) {
-		long startTime = System.currentTimeMillis();
-		String s = "ZCZC345345SOHZCZCETXhhETXNNNN";
-		String str = getTele(s);
-		System.out.println(str);
-		System.out.println(System.currentTimeMillis() - startTime);
-		
+//		long startTime = System.currentTimeMillis();
+//		String s = "ZCZC345345SOHZCZCETXhhETXNNNN";
+//		String str = getTele(s);
+//		System.out.println(str);
+//		System.out.println(System.currentTimeMillis() - startTime);
+		AtomicInteger ai = new AtomicInteger(999999999);
+		while(true){
+			int a = ai.incrementAndGet();
+			System.out.println(a);
+		}
 
 	}
 	

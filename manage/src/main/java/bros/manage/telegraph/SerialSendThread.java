@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import bros.manage.business.service.ITelSendQueueService;
 import bros.manage.main.MainWindow;
@@ -32,9 +33,9 @@ public class SerialSendThread extends Thread {
 
 	@Override
 	public void run() {
+		AtomicInteger count = new AtomicInteger(0);
 		while(runbit){
 			DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
-			
 			// 获取ben
 			ITelSendQueueService itelSendQueueService = (ITelSendQueueService) SpringUtil.getBean("telSendQueueService");
 			// 待发送列表List
@@ -50,8 +51,11 @@ public class SerialSendThread extends Thread {
 					// 电报原文
 					String originaltxt = (String) queryTeleInfoList.get(0).get("originaltxt");
 					SerialPortManager.sendToPort(sp, originaltxt.getBytes("US-ASCII"));
-					MainWindow.sendBoard.append(originaltxt + "\r\n");
-					
+					int num = count.incrementAndGet();
+					MainWindow.sendBoard.append("第" + num + "次发送电报:" + originaltxt + "\r\n");
+					if(num % 200  == 0){
+						MainWindow.sendBoard.setText("");
+					}
 					// 组装入参
 					Map <String,Object> contextMap = new HashMap<String,Object>();
 					contextMap.put("tel_id", tel_id);
@@ -61,8 +65,13 @@ public class SerialSendThread extends Thread {
 					DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", "" ,"成功","无", tel_id, "4" ,"对已经发送的电报标志位(SEND_FLAG)更新为已发送","发送电报");
 					// 电报发送成功,记录电报处理日志
 					DataBaseUtil.saveReceiveQueueDealLog("电报发送", "发送", "" ,"成功","无", tel_id, "4" ,"发送电报","发送电报");
+					
 				}else {
-					MainWindow.sendBoard.append("数据库中暂时没有待发送电报" + "\r\n");
+					int num = count.incrementAndGet();
+					MainWindow.sendBoard.append("第" + num + "次发送电报:" +"数据库中暂时没有待发送电报" + "\r\n");
+					if(num % 200  == 0){
+						MainWindow.sendBoard.setText("");
+					}
 				}
 				Thread.sleep(2000);
 			} catch (SendDataToSerialPortFailure e) {
