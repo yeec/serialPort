@@ -39,7 +39,7 @@
 	
 	
 	<!-- 更新监控时间表 -->
-    <update id="updateJaiJailtimeinfo"  parameterType="java.util.HashMap" resultType="int">
+    <update id="updateJaiJailtimeinfo"  parameterType="java.util.HashMap">
 		UPDATE JAI_T_JAILTIME 
 			SET 
 			LAST_TIME = sysdate,

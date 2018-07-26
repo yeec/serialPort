@@ -30,6 +30,7 @@ import bros.manage.telegraph.exception.SerialPortOutputStreamCloseFailure;
 import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
 import bros.manage.util.ArrayUtils;
+import bros.manage.util.DataBaseUtil;
 
 
 /**
@@ -121,14 +122,14 @@ public class SerialPortManager {
 	 * @throws SendDataToSerialPortFailure        向串口发送数据失败
 	 * @throws SerialPortOutputStreamCloseFailure 关闭串口对象的输出流出错
 	 */
-	public static void sendToPort(SerialPort serialPort, byte[] order)
-			throws SendDataToSerialPortFailure, SerialPortOutputStreamCloseFailure {
+	public static void sendToPort(SerialPort serialPort, byte[] order) throws SendDataToSerialPortFailure, SerialPortOutputStreamCloseFailure {
 		OutputStream out = null;
 		try {
 			out = serialPort.getOutputStream();
 			out.write(order);
 			out.flush();
 		} catch (IOException e) {
+			DataBaseUtil.saveSendExceptionLog("运行", "异常", e.getMessage().toString(), "3");
 			throw new SendDataToSerialPortFailure();
 		} finally {
 			try {

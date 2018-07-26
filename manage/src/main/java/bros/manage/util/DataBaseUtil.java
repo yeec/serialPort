@@ -9,17 +9,18 @@ import java.util.UUID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.druid.pool.GetConnectionTimeoutException;
+
 import bros.manage.business.service.IJaiJAiltimeService;
 import bros.manage.business.service.ILogSysStatemService;
+import bros.manage.business.service.ILogTellogService;
 import bros.manage.business.service.ITelReceiveQueueService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.exception.ServiceException;
 import bros.manage.main.MainWindow;
-
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.DruidPooledConnection;
-import com.alibaba.druid.pool.GetConnectionTimeoutException;
 
 public class DataBaseUtil {
 	private static final Log logger = LogFactory.getLog(DataBaseUtil.class);
@@ -52,7 +53,11 @@ public class DataBaseUtil {
 
 		try {
 			itelReceiveQueueService.addTelReceiveQueueInfo(contextMap);
+			// 存入电报接收队列时记录电报处理日志
+			saveReceiveQueueDealLog("电报接收", "新建", "" ,"成功","无", mainKey, "1" ,"电报接收","接收结果");
 		} catch (ServiceException e) {
+			// 存入电报接收队列时记录电报处理日志
+			saveReceiveQueueDealLog("电报接收", "新建", "" ,"失败",e.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
 			logger.error("记录数据库失败",e);
 		}
 	}
@@ -149,7 +154,51 @@ public class DataBaseUtil {
 			contextMap.put("delaMac", DeviceInfo.getDeviceMAC());
 			logSysStatemService.addLogSysStatemInfo(contextMap);
 		} catch (Exception e) {
-			// TODO: handle exception
+			logger.error("记录数据库失败",e);
+		}
+	}
+	
+	/**
+	 * 存入电报接收队列时记录电报处理日志
+	 */
+	public static void saveReceiveQueueDealLog(String logFun, String logType, String logSQL ,String logResult,String logMemo, String mainKey, String deaNum ,String dealType,String dealMemo) {
+		try {
+			ILogTellogService logTellogService = (ILogTellogService) SpringUtil.getBean("logTellogService");
+			Map<String,Object> contextMap = new HashMap<String, Object>();
+			 contextMap.put("logFun", logFun);
+			 contextMap.put("logType", logType); 
+			 contextMap.put("logSQL", logSQL);
+			 contextMap.put("logResult", logResult);
+			 contextMap.put("logMemo", logMemo);
+			 contextMap.put("mainKey", mainKey);
+			 contextMap.put("deaNum", deaNum);
+			 contextMap.put("dealType", dealType);
+			 contextMap.put("dealMemo", dealMemo);
+			logTellogService.addLogTellogInfo(contextMap);
+		} catch (ServiceException e) {
+			logger.error("记录数据库失败",e);
+		}
+	}
+	
+	/**
+	 * 电报发送模块异常捕捉：记录系统运行日志
+	 */
+	public static void saveSendExceptionLog(String sysDealType,String sysState,String logMemo, String logGrade) {
+		
+		try {
+			ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
+			
+			Map<String,Object> contextMap = new HashMap<String, Object>();
+			contextMap.put("sysDealType", sysDealType); // 系统操作类型
+			contextMap.put("sysState", sysState); // 系统状态
+			contextMap.put("logMemo", logMemo); // 日志描述
+			contextMap.put("logGrade", logGrade); // 日志等级
+			contextMap.put("delaIp", DeviceInfo.getDeviceIp()); // 操作机器IP
+			contextMap.put("delaMac", DeviceInfo.getDeviceMAC()); // 操作机器MAC
+			
+			logSysStatemService.addLogSysStatemInfo(contextMap);
+		} catch (ServiceException e) {
+			logger.error("记录数据库失败",e);
 		}
 	}
 }
