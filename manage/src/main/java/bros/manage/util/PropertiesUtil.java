@@ -39,11 +39,20 @@ public class PropertiesUtil {
 			}
 			PropertiesConfiguration conf = new PropertiesConfiguration(fileName);
 //			conf.setProperty("spring.datasource.default.url", "jdbc:oracle:thin:@"+dbMap.get("ip")+":"+dbMap.get("port")+":"+dbMap.get("svrName"));
+			// 数据库参数
 			conf.setProperty("spring.datasource.default.ip", dbMap.get("ip"));
 			conf.setProperty("spring.datasource.default.port", dbMap.get("port"));
 			conf.setProperty("spring.datasource.default.svrName", dbMap.get("svrName"));
 			conf.setProperty("spring.datasource.default.username", dbMap.get("userName"));
 			conf.setProperty("spring.datasource.default.password", dbMap.get("password"));
+			// 串口参数
+			conf.setProperty("spring.datasource.default.baudRate", dbMap.get("baudRate"));
+			conf.setProperty("spring.datasource.default.databits", dbMap.get("databits"));
+			conf.setProperty("spring.datasource.default.stopbits", dbMap.get("stopbits"));
+			conf.setProperty("spring.datasource.default.parity", dbMap.get("parity"));
+			conf.setProperty("spring.datasource.default.flowControlIn", dbMap.get("flowControlIn"));
+			conf.setProperty("spring.datasource.default.flowControlOut", dbMap.get("flowControlOut"));
+			
 			conf.save();
 		} catch (ConfigurationException e) {
 			logger.error("修改数据库配置文件信息失败",e);
@@ -95,11 +104,20 @@ public class PropertiesUtil {
 			}else{
 				Map<String,Object> dbDiskMap = new HashMap<String, Object>();
 				PropertiesConfiguration conf = new PropertiesConfiguration(dbPropertiesFilePath);
+				// 数据库参数配置
 				dbDiskMap.put("ip", conf.getString("spring.datasource.default.ip"));
 				dbDiskMap.put("port", conf.getString("spring.datasource.default.port"));
 				dbDiskMap.put("svrName", conf.getString("spring.datasource.default.svrName"));
 				dbDiskMap.put("username", conf.getString("spring.datasource.default.username"));
 				dbDiskMap.put("password", conf.getString("spring.datasource.default.password"));
+				// 串口参数配置
+				dbDiskMap.put("baudRate", conf.getString("spring.datasource.default.baudRate"));
+				dbDiskMap.put("databits", conf.getString("spring.datasource.default.databits"));
+				dbDiskMap.put("stopbits", conf.getString("spring.datasource.default.stopbits"));
+				dbDiskMap.put("parity", conf.getString("spring.datasource.default.parity"));
+				dbDiskMap.put("flowControlIn", conf.getString("spring.datasource.default.flowControlIn"));
+				dbDiskMap.put("flowControlOut", conf.getString("spring.datasource.default.flowControlOut"));
+				
 				return dbDiskMap;
 			}
 		} catch (Exception e) {

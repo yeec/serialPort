@@ -8,6 +8,8 @@ import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.ParameterMode;
 import org.apache.ibatis.reflection.MetaObject;
+import org.apache.ibatis.reflection.Reflector;
+import org.apache.ibatis.reflection.ReflectorFactory;
 import org.apache.ibatis.reflection.SystemMetaObject;
 import org.apache.ibatis.reflection.property.PropertyTokenizer;
 import org.apache.ibatis.scripting.xmltags.ForEachSqlNode;
@@ -64,7 +66,27 @@ public class MyBatisSqlUtils {
                 {
                     parameterObject = parameterMap.get(propertyName);
                 }
-                metaObject = parameterMap == null ? null : MetaObject.forObject(parameterObject, SystemMetaObject.DEFAULT_OBJECT_FACTORY, SystemMetaObject.DEFAULT_OBJECT_WRAPPER_FACTORY,null);  
+                ReflectorFactory rf = new ReflectorFactory() {
+					
+					@Override
+					public void setClassCacheEnabled(boolean classCacheEnabled) {
+						// TODO Auto-generated method stub
+						
+					}
+					
+					@Override
+					public boolean isClassCacheEnabled() {
+						// TODO Auto-generated method stub
+						return false;
+					}
+					
+					@Override
+					public Reflector findForClass(Class<?> type) {
+						// TODO Auto-generated method stub
+						return null;
+					}
+				};
+                metaObject = parameterMap == null ? null : MetaObject.forObject(parameterObject, SystemMetaObject.DEFAULT_OBJECT_FACTORY, SystemMetaObject.DEFAULT_OBJECT_WRAPPER_FACTORY,rf);  
                 prop = new PropertyTokenizer(propertyName);  
                 if (parameterObject == null) 
                 {  

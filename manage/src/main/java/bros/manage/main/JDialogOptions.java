@@ -388,11 +388,20 @@ public class JDialogOptions extends javax.swing.JDialog {
 		Map<String, Object> dbMap;
 		try {
 			dbMap = PropertiesUtil.getDBPropertiesDiskInfo();
+			// 数据库参数
 			jTextFieldServerAddress.setText((String) dbMap.get("ip"));
 			jTextFieldServerPort.setText((String) dbMap.get("port"));
 			jTextFieldUsername.setText((String) dbMap.get("username"));
 			jTextFieldPassword.setText((String) dbMap.get("password"));
 			jTextFieldServiceName.setText((String) dbMap.get("svrName"));
+			
+			// 串口参数设置
+			jComboBoxBaudRate.setSelectedItem(dbMap.get("baudRate").toString());
+			jComboBoxDatabits.setSelectedItem(dbMap.get("databits").toString());
+			jComboBoxStopbits.setSelectedItem(dbMap.get("stopbits").toString());
+			jComboBoxParity.setSelectedItem(dbMap.get("parity").toString());
+			jComboBoxFlowCtlIn.setSelectedItem(dbMap.get("flowControlIn").toString());
+			jComboBoxFlowCtlOut.setSelectedItem(dbMap.get("flowControlOut").toString());
 		} catch (ConfigurationException e) {
 			throw new ServiceException("读取数据库配置文件失败",e);
 		}
@@ -402,14 +411,26 @@ public class JDialogOptions extends javax.swing.JDialog {
 	// 串口设定和数据库设置确定按钮函数
 	private void jButtonOKMouseClicked(MouseEvent evt) throws ServiceException {
 		try {
+			
+			
+			String portName = jComboBoxPortName.getSelectedItem().toString();// 端口
+			String baudRate = jComboBoxBaudRate.getSelectedItem().toString();// 波特率
+			String databits= jComboBoxDatabits.getSelectedItem().toString();// 数据位
+			String stopbits= jComboBoxStopbits.getSelectedItem().toString();// 奇偶校验
+			String parity= jComboBoxParity.getSelectedItem().toString();// 停止位
+			String flowControlIn= jComboBoxFlowCtlIn.getSelectedItem().toString();// 输入流控制
+			String flowControlOut= jComboBoxFlowCtlOut.getSelectedItem().toString();// 输出流控制
+			
 			// 串口参数设置
-			serialParameters.setPortName(jComboBoxPortName.getSelectedItem().toString());// 端口
-			serialParameters.setBaudRate(jComboBoxBaudRate.getSelectedItem().toString());// 波特率
-			serialParameters.setDatabits(jComboBoxDatabits.getSelectedItem().toString());// 数据位
-			serialParameters.setStopbits(jComboBoxStopbits.getSelectedItem().toString());// 奇偶校验
-			serialParameters.setParity(jComboBoxParity.getSelectedItem().toString());// 停止位
-			serialParameters.setFlowControlIn(jComboBoxFlowCtlIn.getSelectedItem().toString());// 输入流控制
-			serialParameters.setFlowControlOut(jComboBoxFlowCtlOut.getSelectedItem().toString());// 输出流控制
+			serialParameters.setPortName(portName);// 端口
+			serialParameters.setBaudRate(baudRate);// 波特率
+			serialParameters.setDatabits(databits);// 数据位
+			serialParameters.setStopbits(stopbits);// 奇偶校验
+			serialParameters.setParity(parity);// 停止位
+			serialParameters.setFlowControlIn(flowControlIn);// 输入流控制
+			serialParameters.setFlowControlOut(flowControlOut);// 输出流控制
+			
+			
 			
 			// 数据库参数设置
 			String ip=jTextFieldServerAddress.getText(); // 地址
@@ -417,6 +438,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 			String userName=jTextFieldUsername.getText();// 用户名
 			String password =jTextFieldPassword.getText();// 密码
 			String svrName=jTextFieldServiceName.getText();// 服务名
+			
 			
 			/**
 			 * 通过页面定义数据库配置
@@ -440,11 +462,20 @@ public class JDialogOptions extends javax.swing.JDialog {
 			DataSourceContextHolder.setDBType("default");
 			
 			Map<String, Object> dbMap = new HashMap<String, Object>();
+			// 数据库参数
 			dbMap.put("ip", ip);
 			dbMap.put("port", port);
 			dbMap.put("userName", userName);
 			dbMap.put("password", password);
 			dbMap.put("svrName", svrName);
+			
+			// 串口参数
+			dbMap.put("baudRate", baudRate);
+			dbMap.put("databits", databits);
+			dbMap.put("stopbits", stopbits);
+			dbMap.put("parity", parity);
+			dbMap.put("flowControlIn", flowControlIn);
+			dbMap.put("flowControlOut", flowControlOut);
 		
 			PropertiesUtil.setDBPropertiesInfo(dbMap);
 		} catch (ConfigurationException e) {
