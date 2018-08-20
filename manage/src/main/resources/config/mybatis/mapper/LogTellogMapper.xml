@@ -4,7 +4,7 @@
 <mapper namespace="bros.manage.business.mapper.LogTellogMapper" >
     <!-- 记录电报日志表-->
 	<insert id="insertLogTellogInfo" parameterType="java.util.HashMap">
-		 insert into LOG_T_TELLOG (
+		 insert into ATMLOG.LOG_T_TELLOG (
 			LOG_NUM, 
 			LOG_TIME, 
 			LOG_SYS, 
@@ -21,12 +21,12 @@
 			DEAL_TYPE, 
 			DEAL_MEMO
 		 ) values (
-			 LOG_SEQ.NEXTVAL,
+			 ATMLOG.LOG_SEQ_ID.NEXTVAL,
 			 sysdate, 
 			 '电报接收系统', 
 			 #{logFun}, 
 			 #{logType},
-			 #{logSQL,javaType=string,jdbcType=VARCHAR}, 
+			 #{logSQL}, 
 			 #{logResult}, 
 			 #{logMemo}, 
 			 #{mainKey}, 

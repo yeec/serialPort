@@ -67,6 +67,6 @@
     <update id="updateTelSendInfo"  parameterType="java.util.HashMap">
 		UPDATE TEL_T_SEND_QUEUE
 		SET SEND_FLAG='1'
-		WHERE TEL_ID=#{telId}
+		WHERE TEL_ID=#{tel_id}
 	</update>
 </mapper>

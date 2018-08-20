@@ -5,7 +5,7 @@
 <mapper namespace="bros.manage.business.mapper.JaiJAiltimeMapper" >
     <!-- 记录监控时间表-->
 	<insert id="insertJaiJailtimeinfo" parameterType="java.util.HashMap">
-		 insert into JAI_T_JAILTIME (
+		 insert into ATMMAIN.JAI_T_JAILTIME (
 			TEL_JAI_NAME, 
 			TEL_SENDREC_DATABASE_TIME, 
 			TEL_SENDREC_REC_LASTTIME, 
@@ -41,7 +41,7 @@
 	
 	<!-- 更新监控时间表 -->
     <update id="updateJaiJailtimeinfo"  parameterType="java.util.HashMap">
-		UPDATE JAI_T_JAILTIME 
+		UPDATE ATMMAIN.JAI_T_JAILTIME 
 			SET 
 			LAST_TIME = sysdate,
 			<!-- <if test="telSendrecRecLasttime != null and telSendrecRecLasttime != ''">

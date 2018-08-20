@@ -25,7 +25,7 @@ public class SerialSendThread extends Thread {
 	public SerialSendThread(SerialPort sp) {
 		super();
 		this.sp = sp;
-		this.runbit = true;
+		this.runbit = false;
 	}
 
 
@@ -52,10 +52,11 @@ public class SerialSendThread extends Thread {
 					String originaltxt = (String) queryTeleInfoList.get(0).get("originaltxt");
 					SerialPortManager.sendToPort(sp, originaltxt.getBytes("US-ASCII"));
 					int num = count.incrementAndGet();
-					MainWindow.sendBoard.append("第" + num + "次发送电报:" + originaltxt + "\r\n");
-					if(num % 200  == 0){
-						MainWindow.sendBoard.setText("");
-					}
+					MainWindow.sendBoard.setText(originaltxt + "\r\n");
+//					MainWindow.sendBoard.append("第" + num + "次发送电报:" + originaltxt + "\r\n");
+//					if(num % 200  == 0){
+//						MainWindow.sendBoard.setText("");
+//					}
 					// 组装入参
 					Map <String,Object> contextMap = new HashMap<String,Object>();
 					contextMap.put("tel_id", tel_id);
@@ -68,10 +69,10 @@ public class SerialSendThread extends Thread {
 					
 				}else {
 					int num = count.incrementAndGet();
-					MainWindow.sendBoard.append("第" + num + "次发送电报:" +"数据库中暂时没有待发送电报" + "\r\n");
-					if(num % 200  == 0){
-						MainWindow.sendBoard.setText("");
-					}
+					MainWindow.sendBoard.setText("数据库中暂时没有待发送电报" + "\r\n");
+//					if(num % 200  == 0){
+//						MainWindow.sendBoard.setText("");
+//					}
 				}
 				Thread.sleep(2000);
 			} catch (SendDataToSerialPortFailure e) {

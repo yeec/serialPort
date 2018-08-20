@@ -254,11 +254,12 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 						if (getTele(result)) {
 							sb = new StringBuilder();
 							int num = count.incrementAndGet();
-							MainWindow.recieveBoard.append("第" + num + "次接收电报:" + result + "\r\n");
+//							MainWindow.recieveBoard.setText("第" + num + "次接收电报:" + result + "\r\n");
+							MainWindow.recieveBoard.setText(result + "\r\n");
 							MainWindow.recieveBoard.paintImmediately(MainWindow.recieveBoard.getBounds());
-							if(num % 200  == 0){
-								MainWindow.recieveBoard.setText("");
-							}
+//							if(num % 200  == 0){
+//								MainWindow.recieveBoard.setText("");
+//							}
 							DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "NNNN" : "SOH");
 							DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
 							MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);

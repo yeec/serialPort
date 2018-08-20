@@ -34,7 +34,7 @@
 	
     <!-- 记录系统状态日志表-->
 	<insert id="insertLogSysStatemInfo" parameterType="java.util.HashMap">
-		 insert into LOG_T_SYS_STATE (
+		 insert into ATMLOG.LOG_T_SYS_STATE (
 			LOG_NUM,
 			LOG_TIME,
 			SYS_DEAL_TYPE,
@@ -47,7 +47,7 @@
 			DELA_IP,
 			DELA_MAC
 		 ) values (
-			 LOG_SEQ.NEXTVAL, 
+			 ATMLOG.LOG_SEQ_ID.NEXTVAL, 
 			 sysdate,
 			 #{sysDealType},
 			 #{sysState},
