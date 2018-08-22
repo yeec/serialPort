@@ -42,7 +42,7 @@ public class LogTellogServiceImpl implements ILogTellogService{
 			
 			String id = "bros.manage.business.mapper.LogTellogMapper.insertLogTellogInfo";
 	        MyBatisSql sql = MyBatisSqlUtils.getMyBatisSql(id, contextMap, sqlSessionFactory); 
-	        //contextMap.put("logSQL", sql.toString());
+	        contextMap.put("logSQL", sql.toString());
 	        logTellogMapper.insertLogTellogInfo(contextMap);
 
 		}catch (Exception e) {

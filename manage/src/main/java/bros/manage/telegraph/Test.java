@@ -10,12 +10,32 @@ public class Test {
 //		String str = getTele(s);
 //		System.out.println(str);
 //		System.out.println(System.currentTimeMillis() - startTime);
-		AtomicInteger ai = new AtomicInteger(999999999);
-		while(true){
-			int a = ai.incrementAndGet();
-			System.out.println(a);
-		}
+//		AtomicInteger ai = new AtomicInteger(999999999);
+//		while(true){
+//			int a = ai.incrementAndGet();
+//			System.out.println(a);
+//		}
+		String newData = "NNNN";
+		byte [] data = newData.getBytes();
+		String a = bytesToHexString(data);
+//		String sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
+		
+		System.out.println(a);
 
+	}
+	
+	public static String bytesToHexString(byte[] bArr) {
+	    StringBuffer sb = new StringBuffer(bArr.length);
+	    String sTmp;
+
+	    for (int i = 0; i < bArr.length; i++) {
+	        sTmp = Integer.toHexString(0xFF & bArr[i]);
+	        if (sTmp.length() < 2)
+	            sb.append(0);
+	        sb.append(sTmp.toUpperCase());
+	    }
+
+	    return sb.toString();
 	}
 	
 	public static String getTele(String s){

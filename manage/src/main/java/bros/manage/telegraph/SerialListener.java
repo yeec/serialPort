@@ -29,7 +29,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	private static final Log logger = LogFactory.getLog(SerialListener.class);
 	InputStream inputStream; // 从串口来的输入流
 	SerialPort port;
-	private StringBuilder linkWgt;// 存放获取的数据
+	private StringBuilder linkWgt = new StringBuilder();// 存放获取的数据
 
 	public SerialListener(SerialPort port) throws IOException {
 		this.port = port;
@@ -43,6 +43,23 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	private StringBuilder sb = new StringBuilder();
 	// 报文处理线程停止位
 	private boolean stop = false;
+	
+	private byte[] resultTmp;
+	/**
+	 * 
+	 * @param data1
+	 * @param data2
+	 * @return data1 与 data2拼接的结果
+	 */
+	public byte[] addBytes(byte[] data1, byte[] data2) {
+		if(data1==null){
+			return data2;
+		}
+		byte[] data3 = new byte[data1.length + data2.length];
+		System.arraycopy(data1, 0, data3, 0, data1.length);
+		System.arraycopy(data2, 0, data3, data1.length, data2.length);
+		return data3;
+	}
 
 	// 电报格式报文处理
 	public boolean getTele(String teleContent) {
@@ -97,10 +114,22 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	/**
 	 * 处理监控到的串口事件
 	 */
-	
-	public void serialEvent(SerialPortEvent serialPortEvent) {
-		
+	public String bytesToHexString(byte[] bArr) {
+	    StringBuffer sb = new StringBuffer(bArr.length);
+	    String sTmp;
 
+	    for (int i = 0; i < bArr.length; i++) {
+	        sTmp = Integer.toHexString(0xFF & bArr[i]);
+	        if (sTmp.length() < 2)
+	            sb.append(0);
+	        sb.append(sTmp.toUpperCase());
+	    }
+
+	    return sb.toString();
+	}
+	public void serialEvent(SerialPortEvent serialPortEvent) {
+		int newData = 0;
+		String sSubStr = "";
 		switch (serialPortEvent.getEventType()) {
 			case SerialPortEvent.BI: // 10 通讯中断
 				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
@@ -132,18 +161,40 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
 				//记录最后一次电报时间
 				DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
-				byte[] readBuffer = new byte[1];
+				
 	            try {
 	                int numBytes = -1;
 	                while (inputStream.available() > 0) {
-	                    numBytes = inputStream.read(readBuffer);
-
-	                    if (numBytes > 0) {
-	                        msgQueue.add(new String(readBuffer));
-	                        readBuffer = new byte[1];// 重新构造缓冲对象，否则有可能会影响接下来接收的数据
-	                    } else {
-	                        msgQueue.add("额------没有读到数据");
-	                    }
+	                	byte[] readBuffer = new byte[1];
+						newData = inputStream.read(readBuffer);
+//						if (newData == -1) {
+//							break;
+//						}
+						if (-1 != newData) {
+							resultTmp = addBytes(resultTmp, readBuffer);
+							// 把0~255的int转换成两位的16进制字符串
+//							sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00);
+							sSubStr = bytesToHexString(readBuffer);
+							// System.out.println(sSubStr);
+							if("4E".equalsIgnoreCase(sSubStr)){
+								linkWgt.append(sSubStr);
+							}else{
+								linkWgt = new StringBuilder();
+							}
+							if(linkWgt.toString().equals("4E4E4E4E")){
+								linkWgt = new StringBuilder();
+								msgQueue.add(new String(resultTmp,"GBK"));
+								resultTmp=null;
+							}
+						}
+//	                    numBytes = inputStream.read(readBuffer);
+//
+//	                    if (numBytes > 0) {
+//	                        msgQueue.add(new String(readBuffer));
+//	                        readBuffer = new byte[1];// 重新构造缓冲对象，否则有可能会影响接下来接收的数据
+//	                    } else {
+//	                        msgQueue.add("额------没有读到数据");
+//	                    }
 	                }
 	            } catch (IOException e) {
 	            	MainWindow.mainBoard.addMsg("接收电报数据异常,请检查COM口连接是否正常", LocalBoard.INFO_LOG);
