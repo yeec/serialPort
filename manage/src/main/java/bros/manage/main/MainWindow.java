@@ -9,12 +9,9 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,18 +33,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
 
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.DruidPooledConnection;
-
 import bros.manage.NetUnionManageApplication;
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DataSourceContextHolder;
-import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
 import bros.manage.telegraph.SerialListener;
-import bros.manage.telegraph.SerialListener_bak;
 import bros.manage.telegraph.SerialSendThread;
 import bros.manage.telegraph.exception.NoSuchPort;
 import bros.manage.telegraph.exception.NotASerialPort;
@@ -487,8 +479,6 @@ public class MainWindow extends JFrame {
 		if(sl!=null){
 			//停止报文处理线程
 			sl.stopHandle();
-			//清空报文缓存
-			sl.clearBuffer();
 		}
 		// 组装正常记录日志入参（电报收发系统接收发送状态改变日志）
 		Map<String, Object> stopTelegramMap = new HashMap<String, Object>();
@@ -622,7 +612,7 @@ public class MainWindow extends JFrame {
 			if(null==sp){
 				sp = SerialPortManager.openPort(serialParameters);
 			}
-			InputStream inputStream = sp.getInputStream();
+			//InputStream inputStream = sp.getInputStream();
 			sl = new SerialListener(sp);
 			SerialPortManager.addListener(sp, sl);
 			sl.start();

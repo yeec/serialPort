@@ -1,17 +1,20 @@
 package bros.manage.util;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.alibaba.druid.pool.DruidDataSource;
-import com.alibaba.druid.pool.DruidPooledConnection;
-import com.alibaba.druid.pool.GetConnectionTimeoutException;
+import org.apache.ibatis.session.SqlSessionFactory;
 
 import bros.manage.business.service.IJaiJAiltimeService;
 import bros.manage.business.service.ILogSysStatemService;
@@ -19,8 +22,13 @@ import bros.manage.business.service.ILogTellogService;
 import bros.manage.business.service.ITelReceiveQueueService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DynamicDataSource;
+import bros.manage.entity.MyBatisSql;
 import bros.manage.exception.ServiceException;
 import bros.manage.main.MainWindow;
+
+import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.pool.DruidPooledConnection;
+import com.alibaba.druid.pool.GetConnectionTimeoutException;
 
 public class DataBaseUtil {
 	private static final Log logger = LogFactory.getLog(DataBaseUtil.class);
@@ -48,20 +56,79 @@ public class DataBaseUtil {
 		contextMap.put("recMac", DeviceInfo.getDeviceMAC());
 		// 用户ID
 		contextMap.put("userid", "SYSTEM_TEL");
+		
+		// 获取执行SQL
+		String sqlId = "bros.manage.business.mapper.TelReceiveQueueMapper.insertTelReceiveInfo";
+		String sql = getSql(sqlId,contextMap);
+		
 		// 获取ben
 		ITelReceiveQueueService itelReceiveQueueService = (ITelReceiveQueueService) SpringUtil.getBean("telReceiveQueueService");
-
+		try {
+			if(!DataBaseUtil.checkDBState("default")){
+				Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+			}
+		} catch (Exception e3) {
+			logger.error("检查数据库状态失败",e3);
+		}
 		try {
 			itelReceiveQueueService.addTelReceiveQueueInfo(contextMap);
 			// 存入电报接收队列时记录电报处理日志
-			saveReceiveQueueDealLog("电报接收", "新建", "" ,"成功","无", mainKey, "1" ,"电报接收","接收结果");
-		} catch (ServiceException e) {
-			// 存入电报接收队列时记录电报处理日志
-			saveReceiveQueueDealLog("电报接收", "新建", "" ,"失败",e.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
+			saveReceiveQueueDealLog("电报接收", "新建", sql ,"成功","无", mainKey, "1" ,"电报接收","接收结果");
+		} catch (Exception e) {
+			Map<String, Object> propertiesMap;
+			try {
+				// 断网、连接不上数据库时存入文件
+				propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+				// 存入电报接收队列时记录电报处理日志
+				saveReceiveQueueDealLog("电报接收", "新建", sql ,"失败",e.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
+			} catch (ConfigurationException e1) {
+				logger.error("配置文件读取失败",e1);
+			}catch(Exception e2){
+				logger.error("记录数据库失败",e);
+			}
 			logger.error("记录数据库失败",e);
 		}
 	}
 	
+	// 文件读写文件
+	public static void writeFileByLine(String file, String conent) {
+		String path=file.substring(0,file.lastIndexOf("/"));
+		File pathF = new File(path);
+		if(!pathF.exists()){
+			pathF.mkdirs();
+		}
+		File f = new File(file);
+		if(!f.exists()){
+			try {
+				f.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		BufferedWriter out = null;
+		try {
+			out = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(file, true)));
+			out.write(conent + "\r\n");
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				out.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	// 检测数据库状态
 	public static boolean checkDBState(String dataSourceName) throws Exception{
 		boolean flag = true;
 		DruidDataSource defaultDataSource = (DruidDataSource) new DynamicDataSource().getInstance().getDataSourceMap().get(dataSourceName);
@@ -78,13 +145,15 @@ public class DataBaseUtil {
 				flag = true;
 			}
 		} catch(GetConnectionTimeoutException gte){
+			flag=false;
 			MainWindow.mainBoard.addMsg("数据库连接超时,请检查数据库配置!", LocalBoard.INFO_SYSTEM);
-			defaultDataSource.close();
-			throw new ServiceException("EBNT0000", "数据库连接超时,请检查数据库配置");
+			//defaultDataSource.close();
+			logger.error("数据库连接超时,请检查数据库配置",gte);
 		}catch (SQLException e) {
+			flag=false;
 			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
 			logger.error("检查数据库状态失败", e);
-			throw new ServiceException("EBNT0000", "检查数据库状态失败");
+			
 		}
 		
 		return flag;
@@ -200,5 +269,11 @@ public class DataBaseUtil {
 		} catch (ServiceException e) {
 			logger.error("记录数据库失败",e);
 		}
+	}
+	
+	public static String getSql(String sqlId,Map<String,Object> contextMap ){
+		SqlSessionFactory sqlSessionFactory = (SqlSessionFactory) SpringUtil.getBean("sqlSessionFactory");
+        MyBatisSql sql = MyBatisSqlUtils.getMyBatisSql(sqlId, contextMap, sqlSessionFactory); 
+        return sql.toString();
 	}
 }

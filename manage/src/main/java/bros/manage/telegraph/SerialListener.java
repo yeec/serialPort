@@ -1,5 +1,9 @@
 package bros.manage.telegraph;
 
+import gnu.io.SerialPort;
+import gnu.io.SerialPortEvent;
+import gnu.io.SerialPortEventListener;
+
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,11 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
-import bros.manage.util.ArrayUtils;
 import bros.manage.util.DataBaseUtil;
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener;
 
 /**
  * 接收电报监听器
@@ -29,22 +29,24 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	private static final Log logger = LogFactory.getLog(SerialListener.class);
 	InputStream inputStream; // 从串口来的输入流
 	SerialPort port;
-	private StringBuilder linkWgt = new StringBuilder();// 存放获取的数据
+	//缓存NNNN字符串
+	private StringBuilder linkWgt = new StringBuilder();
+	//缓存ETX字符串
+	private StringBuilder linkEtx = new StringBuilder();
 
 	public SerialListener(SerialPort port) throws IOException {
 		this.port = port;
 		this.inputStream = new BufferedInputStream(port.getInputStream());
 	}
 
-	// private BlockingQueue<String> msgQueue = new
-	// LinkedBlockingQueue<String>();
 	private BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>();
-	// 读到的电报缓存
-	private StringBuilder sb = new StringBuilder();
+
 	// 报文处理线程停止位
 	private boolean stop = false;
 	
 	private byte[] resultTmp;
+	
+	private AtomicInteger receiveNum = new AtomicInteger(0);
 	/**
 	 * 
 	 * @param data1
@@ -61,51 +63,6 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 		return data3;
 	}
 
-	// 电报格式报文处理
-	public boolean getTele(String teleContent) {
-		boolean flag = true;
-		boolean result = false;
-		while (flag) {
-			int INZCZCTELEGRAPH = teleContent.lastIndexOf("ZCZC");
-			int INSOHTELEGRAPH = teleContent.lastIndexOf("SOH");
-			if (INZCZCTELEGRAPH != -1) {
-				int INNNNNTELEGRAPH = teleContent.lastIndexOf("NNNN");
-				if (INNNNNTELEGRAPH != -1 && INNNNNTELEGRAPH > INZCZCTELEGRAPH) {
-					teleContent = teleContent.substring(INZCZCTELEGRAPH, INNNNNTELEGRAPH);
-					if (teleContent.indexOf("NNNN") == -1) {
-						teleContent = teleContent + "NNNN";
-						flag = false;
-						continue;
-					}
-				}
-			} else if (INSOHTELEGRAPH != -1) {
-				int INETXTELEGRAPH = teleContent.lastIndexOf("ETX");
-				if (INETXTELEGRAPH != -1 && INETXTELEGRAPH > INSOHTELEGRAPH) {
-					teleContent = teleContent.substring(INSOHTELEGRAPH, INETXTELEGRAPH);
-					if (teleContent.indexOf("ETX") == -1) {
-						teleContent = teleContent + "ETX";
-						flag = false;
-						continue;
-					}
-				}
-			} else {
-				teleContent = "输入字符串的格式不正确:" + teleContent;
-				flag = false;
-				result = false;
-				continue;
-			}
-		}
-		result = true;
-		return result;
-		// return teleContent;
-	}
-
-	// 清空报文缓存
-	public void clearBuffer() {
-		sb.setLength(0);
-		;
-	}
-
 	// 停止线程
 	public void stopHandle() {
 		stop = true;
@@ -114,7 +71,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	/**
 	 * 处理监控到的串口事件
 	 */
-	public String bytesToHexString(byte[] bArr) {
+	public static String bytesToHexString(byte[] bArr) {
 	    StringBuffer sb = new StringBuffer(bArr.length);
 	    String sTmp;
 
@@ -159,158 +116,98 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 				MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
 				break;
 			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
-				//记录最后一次电报时间
-				DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
-				
-	            try {
-	                int numBytes = -1;
-	                while (inputStream.available() > 0) {
-	                	byte[] readBuffer = new byte[1];
-						newData = inputStream.read(readBuffer);
-//						if (newData == -1) {
-//							break;
-//						}
-						if (-1 != newData) {
-							resultTmp = addBytes(resultTmp, readBuffer);
-							// 把0~255的int转换成两位的16进制字符串
-//							sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00);
-							sSubStr = bytesToHexString(readBuffer);
-							// System.out.println(sSubStr);
-							if("4E".equalsIgnoreCase(sSubStr)){
-								linkWgt.append(sSubStr);
-							}else{
-								linkWgt = new StringBuilder();
-							}
-							if(linkWgt.toString().equals("4E4E4E4E")){
-								linkWgt = new StringBuilder();
-								msgQueue.add(new String(resultTmp,"GBK"));
-								resultTmp=null;
-							}
-						}
-//	                    numBytes = inputStream.read(readBuffer);
-//
-//	                    if (numBytes > 0) {
-//	                        msgQueue.add(new String(readBuffer));
-//	                        readBuffer = new byte[1];// 重新构造缓冲对象，否则有可能会影响接下来接收的数据
-//	                    } else {
-//	                        msgQueue.add("额------没有读到数据");
-//	                    }
-	                }
-	            } catch (IOException e) {
-	            	MainWindow.mainBoard.addMsg("接收电报数据异常,请检查COM口连接是否正常", LocalBoard.INFO_LOG);
-	            	logger.error("接收电报数据异常,请检查COM口连接是否正常", e);
-	            }
-				break;
-		}
-	
-		/*
-
-			switch (serialPortEvent.getEventType()) {
-			case SerialPortEvent.BI: // 10 通讯中断
-				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.OE: // 7 溢位（溢出）错误
-				MainWindow.mainBoard.addMsg("溢位（溢出）错误", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.FE: // 9 帧错误
-				MainWindow.mainBoard.addMsg("帧错误", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.PE: // 8 奇偶校验错误
-				MainWindow.mainBoard.addMsg("帧错误奇偶校验错误", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.CD: // 6 载波检测
-				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.CTS: // 3 清除待发送数据
-				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.DSR: // 4 待发送数据准备好了
-				MainWindow.mainBoard.addMsg("待发送数据准备好了", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.RI: // 5 振铃指示
-				MainWindow.mainBoard.addMsg("振铃指示", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.OUTPUT_BUFFER_EMPTY: // 2 输出缓冲区已清空
-				MainWindow.mainBoard.addMsg("输出缓冲区已清空", LocalBoard.INFO_SYSTEM);
-				break;
-			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
-	
-				InputStream is = null;
-				byte[] bytes = {};
 				try {
-					is = port.getInputStream();
-					byte[] readBuffer = new byte[1];
-					int byteNums = is.read(readBuffer);
-					while (byteNums > 0) {
-						bytes = ArrayUtils.concat(bytes, readBuffer);
-						readBuffer = new byte[1];
-						byteNums = is.read(readBuffer);
-					}
-	
-				} catch (IOException e) { // TODO Auto-generated catch block
-					e.printStackTrace();
-				} finally {
-					try {
-						if (is != null) {
-							is.close();
-							is = null;
-						}
-					} catch (IOException e) { // TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+					while (inputStream.available() > 0) {
+	                	try {
+		                	byte[] readBuffer = new byte[1];
+							newData = inputStream.read(readBuffer);
+							
+							if (-1 != newData) {
+								resultTmp = addBytes(resultTmp, readBuffer);
+								// 把0~255的int转换成两位的16进制字符串
+	//							sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00);
+								sSubStr = bytesToHexString(readBuffer);
+								if(bytesToHexString("N".getBytes()).equalsIgnoreCase(sSubStr)){
+									linkWgt.append(sSubStr);
+								}else if(bytesToHexString("E".getBytes()).equalsIgnoreCase(sSubStr)){
+									linkEtx.setLength(0);
+									linkEtx.append(sSubStr);
+								}else if(bytesToHexString("T".getBytes()).equalsIgnoreCase(sSubStr)){
+									if(linkEtx.toString().equals(bytesToHexString("E".getBytes()))){
+										linkEtx.append(sSubStr);
+									}else{
+										linkEtx.setLength(0);
+									}
+								}else if(bytesToHexString("X".getBytes()).equalsIgnoreCase(sSubStr)){
+									if(linkEtx.toString().equals(bytesToHexString("ET".getBytes()))){
+										linkEtx.append(sSubStr);
+									}else{
+										linkEtx.setLength(0);
+									}
+								}else{
+									linkWgt.setLength(0);
+									linkEtx.setLength(0);
+								}
+								if(linkWgt.toString().equals(bytesToHexString("NNNN".getBytes()))){
+									linkWgt.setLength(0);
+									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
+									msgQueue.add(new String(resultTmp,"GBK"));
+									resultTmp=null;
+								}
+								if(linkEtx.toString().equals(bytesToHexString("ETX".getBytes()))){
+									linkEtx.setLength(0);
+									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
+									msgQueue.add(new String(resultTmp));
+									resultTmp=null;
+								}
+							}
+							try{
+								//记录最后一次电报时间
+								DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
+							}catch(Exception e){
+								logger.error("更新最后一次接收电报时间失败");
+								continue;
+							}
+	                	} catch (Exception e) {
+	                		logger.error("接收电报数据异常", e);
+	                		continue;
+	    	            }
+	                }
+				} catch (IOException e) {
+					MainWindow.mainBoard.addMsg("接收电报数据异常,请检查COM口连接是否正常", LocalBoard.INFO_LOG);
+	            	logger.error("接收电报数据异常,请检查COM口连接是否正常", e);
 				}
-				msgQueue.add(new String(bytes));
-				System.out.println(new String(bytes));
+			break;
+		}
 	
-				break;
-			}
-	*/
-		}
-	 
-
-	public String process(InputStream in, String charset) {
-		byte[] buf = new byte[1024];
-		StringBuilder sb = new StringBuilder();
-		int len = 0;
-		try {
-			while ((len = in.read(buf)) != -1) {
-				sb.append(new String(buf, 0, len, charset));
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return sb.toString();
 	}
 
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-
-//		int count = 0;
-		AtomicInteger count = new AtomicInteger(0);
 		try {
-			System.out.println("--------------任务处理线程运行了--------------");
+			logger.info("--------------任务处理线程运行了--------------");
 			while (!stop) {
-				// 如果堵塞队列中存在数据就将其输出
-				if (msgQueue.size() > 0) {
-					// System.out.println("数据队列里还有数据");
-					String tmp = msgQueue.take();
-					sb.append(tmp);
-					if ((sb.indexOf("NNNN") != -1 && sb.indexOf("ZCZC") != -1
-							&& sb.indexOf("ZCZC") < sb.lastIndexOf("NNNN"))
-							|| (sb.indexOf("SOH") != -1 && sb.indexOf("ETX") != -1
-									&& sb.indexOf("SOH") < sb.lastIndexOf("ETX"))) {
-						String result = sb.toString();
-
-						if (getTele(result)) {
-							sb = new StringBuilder();
-							int num = count.incrementAndGet();
-//							MainWindow.recieveBoard.setText("第" + num + "次接收电报:" + result + "\r\n");
+				try {
+					AtomicInteger count = new AtomicInteger(0);
+					// 如果堵塞队列中存在数据就将其输出
+					if (msgQueue.size() > 0) {
+						String sb = msgQueue.take();
+						int num = count.incrementAndGet();
+						logger.debug("第"+num+"次读取电报："+sb);
+						String result = null;
+						if(sb.lastIndexOf("ZCZC")!=-1 && sb.indexOf("NNNN")!=-1 && sb.lastIndexOf("ZCZC")<sb.indexOf("NNNN")){
+							result = sb.substring(sb.lastIndexOf("ZCZC"), sb.indexOf("NNNN")+4);
+						}
+						if(null==result || "".equals(result)){
+							if(sb.lastIndexOf("SOH")!=-1 && sb.indexOf("ETX")!=-1 && sb.lastIndexOf("SOH")<sb.indexOf("ETX")){
+								result = sb.substring(sb.lastIndexOf("SOH"), sb.indexOf("ETX")+3);
+							}
+						}
+						if(null!=result && !"".equals(result)){
+							logger.debug("第"+num+"次处理后电报："+result);
+	//						MainWindow.recieveBoard.setText("第" + num + "次接收电报:" + result + "\r\n");
 							MainWindow.recieveBoard.setText(result + "\r\n");
-							MainWindow.recieveBoard.paintImmediately(MainWindow.recieveBoard.getBounds());
-//							if(num % 200  == 0){
-//								MainWindow.recieveBoard.setText("");
-//							}
+	
 							DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "NNNN" : "SOH");
 							DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
 							MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
@@ -322,63 +219,14 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 							}
 						}
 					}
+				} catch (Exception e) {
+					logger.error("处理接收电报数据线程异常", e);
+					continue;
 				}
 			}
-		} catch (InterruptedException e) {
+		} catch (Exception e) {
 			logger.error("处理接收电报队列线程异常", e);
 		}
 	}
 
-	// 实现监听方法
-//	public void serialEvent(SerialPortEvent e) {
-//		int newData = 0;
-//		byte bRead[] = { 0 };
-//		String sSubStr = "";
-//		linkWgt = new StringBuilder();
-//		// Determine type of event.
-//		switch (e.getEventType()) {
-//		// Read data until -1 is returned. If \r is received substitute
-//		// \n for correct newline handling.
-//		case SerialPortEvent.DATA_AVAILABLE:
-//			while (newData != -1) {
-//				try {
-//					// inStream = serialPort.getInputStream();
-//					newData = inputStream.read();
-//					if (newData == -1) {
-//						break;
-//					}
-//					if ('\r' == (char) newData) {
-//					} else {
-//						// 把0~255的int转换成两位的16进制字符串
-//						sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
-//						// System.out.println(sSubStr);
-//						linkWgt.append(sSubStr);
-//						
-//					}
-//				} catch (IOException ex) {
-//					System.err.println(ex);
-//					return;
-//				}
-//			}
-//			try {
-//				System.out.println("linkWgt 提取命令前----start-----" + linkWgt.toString() + "----end-----");
-//				/*
-//				 * while(linkWgt.indexOf("a55a") != -1) {
-//				 * linkWgt.delete(0,linkWgt.indexOf("a55a")); if(linkWgt.indexOf("9191910000")
-//				 * == -1) { System.out.println("该命令内容错误!" + linkWgt); } else { sCommand
-//				 * =linkWgt.substring(0, linkWgt.indexOf("9191910000"));
-//				 * linkWgt.delete(0,linkWgt.indexOf("9191910000"));
-//				 * System.out.println("sCommand ----start-----" + sCommand + "----end-----"); }
-//				 * }
-//				 */
-//			} catch (Exception ew) {
-//				ew.printStackTrace();
-//			} finally {
-//			}
-//			break;
-//		// If break event append BREAK RECEIVED message.
-//		case SerialPortEvent.BI:
-//			System.out.println("\n--- BREAK RECEIVED ---\n");
-//		}
-//	}
 }

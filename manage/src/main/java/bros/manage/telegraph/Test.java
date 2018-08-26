@@ -15,12 +15,30 @@ public class Test {
 //			int a = ai.incrementAndGet();
 //			System.out.println(a);
 //		}
-		String newData = "NNNN";
-		byte [] data = newData.getBytes();
-		String a = bytesToHexString(data);
-//		String sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00).substring(6);
+//		String newData = "NNNN";
+//		byte [] data = newData.getBytes();
+//		String a = bytesToHexString(data);
+//		
+//		System.out.println(a);
 		
-		System.out.println(a);
+		
+//		StringBuilder sb = new StringBuilder(3);
+//		sb.setLength(3);
+//		sb.append("a");
+//		System.out.println(sb.toString());
+//		sb.append("b");
+//		System.out.println(sb.toString());
+//		sb.append("c");
+//		System.out.println(sb.toString());
+//		sb.setLength(0);
+//		sb.append("d");
+//		System.out.println(sb.toString());
+		StringBuilder sb ;
+		while(true){
+			sb = new StringBuilder();
+			sb.append("sdaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			System.out.println(sb.toString());
+		}
 
 	}
 	

@@ -20,8 +20,12 @@ public class TelReceiveQueueServiceImpl implements ITelReceiveQueueService{
 	@Autowired
 	private TelReceiveQueueMapper telReceiveQueueMapper;
 	@Override
-	public void addTelReceiveQueueInfo(Map<String, Object> contextMap) throws ServiceException {
-		telReceiveQueueMapper.insertTelReceiveInfo(contextMap);
+	public void addTelReceiveQueueInfo(Map<String, Object> contextMap){
+		try{
+			telReceiveQueueMapper.insertTelReceiveInfo(contextMap);
+		}catch(Exception e){
+			throw e;
+		}
 	}
 
 }

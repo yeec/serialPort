@@ -79,6 +79,7 @@ public class PropertiesUtil {
 			dbMap.put("username", conf.getString("spring.datasource.default.username"));
 			dbMap.put("password", conf.getString("spring.datasource.default.password"));
 			dbMap.put("dbPropertiesFilePath", conf.getString("dbPropertiesFilePath"));
+			dbMap.put("teleRestorFilePath", conf.getString("teleRestorFilePath"));
 			return dbMap;
 		} catch (ConfigurationException e) {
 			logger.error("读取数据库配置文件信息失败",e);

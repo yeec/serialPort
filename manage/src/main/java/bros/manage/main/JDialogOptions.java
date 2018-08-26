@@ -443,23 +443,23 @@ public class JDialogOptions extends javax.swing.JDialog {
 			/**
 			 * 通过页面定义数据库配置
 			 */
-			DruidDataSource dynamicDataSource = new DruidDataSource();
-			dynamicDataSource.setDriverClassName("oracle.jdbc.OracleDriver");
-			dynamicDataSource.setUrl("jdbc:oracle:thin:@"+ip+":"+port+":"+svrName);
-			dynamicDataSource.setUsername(userName);
-			dynamicDataSource.setPassword(password);
+//			DruidDataSource dynamicDataSource = new DruidDataSource();
+//			dynamicDataSource.setDriverClassName("oracle.jdbc.OracleDriver");
+//			dynamicDataSource.setUrl("jdbc:oracle:thin:@"+ip+":"+port+":"+svrName);
+//			dynamicDataSource.setUsername(userName);
+//			dynamicDataSource.setPassword(password);
 			
 			/**
 			 * 创建动态数据源
 			 */
-			Map<Object, Object> dataSourceMap = DynamicDataSource.getInstance().getDataSourceMap();
-			dataSourceMap.put("default", dynamicDataSource);
-			DynamicDataSource.getInstance().setTargetDataSources(dataSourceMap);
+//			Map<Object, Object> dataSourceMap = DynamicDataSource.getInstance().getDataSourceMap();
+//			dataSourceMap.put("default", dynamicDataSource);
+//			DynamicDataSource.getInstance().setTargetDataSources(dataSourceMap);
 			
 			/**
 			 * 切换为动态数据源实例
 			 */
-			DataSourceContextHolder.setDBType("default");
+//			DataSourceContextHolder.setDBType("default");
 			
 			Map<String, Object> dbMap = new HashMap<String, Object>();
 			// 数据库参数
