@@ -44,7 +44,7 @@ public class SerialSendThread extends Thread {
 			//从数据库查询记录
 //					String tele = "ZCZC BZY0120 080311FF ZBAAZPZX080311 ZGGGZPZX (DEP-CCA1501/A1234-ZBAA0100-ZGGG-0)NNNN";
 			// 获取执行SQL
-			String sqlId = "bros.manage.business.mapper.TelReceiveQueueMapper.insertTelReceiveInfo";
+			String sqlId = "bros.manage.business.mapper.TelSendQueueMapper.updateTelSendInfo";
 			
 			// 组装入参
 			Map <String,Object> contextMap = null;
