@@ -615,6 +615,7 @@ public class MainWindow extends JFrame {
 			//InputStream inputStream = sp.getInputStream();
 			sl = new SerialListener(sp);
 			SerialPortManager.addListener(sp, sl);
+			sl.setName("报文处理线程");
 			sl.start();
 			//启动发送电报线程
 			startSendThread();

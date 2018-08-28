@@ -47,6 +47,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	private byte[] resultTmp;
 	
 	private AtomicInteger receiveNum = new AtomicInteger(0);
+	private AtomicInteger count = new AtomicInteger(0);
 	/**
 	 * 
 	 * @param data1
@@ -85,8 +86,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	    return sb.toString();
 	}
 	public void serialEvent(SerialPortEvent serialPortEvent) {
-		int newData = 0;
-		String sSubStr = "";
+		
 		switch (serialPortEvent.getEventType()) {
 			case SerialPortEvent.BI: // 10 通讯中断
 				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
@@ -117,13 +117,16 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 				break;
 			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
 				try {
-					while (inputStream.available() > 0) {
+					String sSubStr = "";
+					
+					byte[] readBuffer = new byte[1];
+					int newData = inputStream.read(readBuffer);
+					int i=0;
+					while (newData !=-1) {
 	                	try {
-		                	byte[] readBuffer = new byte[1];
-							newData = inputStream.read(readBuffer);
 							
-							if (-1 != newData) {
 								resultTmp = addBytes(resultTmp, readBuffer);
+								
 								// 把0~255的int转换成两位的16进制字符串
 	//							sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00);
 								sSubStr = bytesToHexString(readBuffer);
@@ -153,21 +156,28 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
 									msgQueue.add(new String(resultTmp,"GBK"));
 									resultTmp=null;
+									try{
+										//记录最后一次电报时间
+										DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
+									}catch(Exception e){
+										logger.error("更新最后一次接收电报时间失败");
+									}
 								}
 								if(linkEtx.toString().equals(bytesToHexString("ETX".getBytes()))){
 									linkEtx.setLength(0);
 									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
 									msgQueue.add(new String(resultTmp));
 									resultTmp=null;
+									try{
+										//记录最后一次电报时间
+										DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
+									}catch(Exception e){
+										logger.error("更新最后一次接收电报时间失败");
+									}
 								}
-							}
-							try{
-								//记录最后一次电报时间
-								DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
-							}catch(Exception e){
-								logger.error("更新最后一次接收电报时间失败");
-								continue;
-							}
+								readBuffer = new byte[1];
+								newData = inputStream.read(readBuffer);
+							
 	                	} catch (Exception e) {
 	                		logger.error("接收电报数据异常", e);
 	                		continue;
@@ -188,7 +198,6 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 			logger.info("--------------任务处理线程运行了--------------");
 			while (!stop) {
 				try {
-					AtomicInteger count = new AtomicInteger(0);
 					// 如果堵塞队列中存在数据就将其输出
 					if (msgQueue.size() > 0) {
 						String sb = msgQueue.take();

@@ -3,6 +3,7 @@ package bros.manage.business.service.impl;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import bros.manage.business.mapper.TelReceiveQueueMapper;
@@ -20,10 +21,10 @@ public class TelReceiveQueueServiceImpl implements ITelReceiveQueueService{
 	@Autowired
 	private TelReceiveQueueMapper telReceiveQueueMapper;
 	@Override
-	public void addTelReceiveQueueInfo(Map<String, Object> contextMap){
+	public void addTelReceiveQueueInfo(Map<String, Object> contextMap) throws DataAccessException{
 		try{
 			telReceiveQueueMapper.insertTelReceiveInfo(contextMap);
-		}catch(Exception e){
+		}catch(DataAccessException e){
 			throw e;
 		}
 	}
