@@ -7,6 +7,7 @@ import gnu.io.SerialPortEventListener;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +18,8 @@ import org.apache.commons.logging.LogFactory;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
 import bros.manage.util.DataBaseUtil;
+import bros.manage.util.DateUtil;
+import bros.manage.util.PropertiesUtil;
 
 /**
  * 接收电报监听器
@@ -154,7 +157,16 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 								if(linkWgt.toString().equals(bytesToHexString("NNNN".getBytes()))){
 									linkWgt.setLength(0);
 									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
-									msgQueue.add(new String(resultTmp,"GBK"));
+									try{
+										msgQueue.add(new String(resultTmp));
+									}catch(Throwable t){
+										logger.error("msgQueue插入队列失败",t);
+										// 断网、连接不上数据库时存入文件
+										Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+										String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+										String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+										DataBaseUtil.writeFileByLine(teleRestorFilePath+"msgQueue"+date+".txt",date+"时间开始接收异常:"+new String(resultTmp));
+									}
 									resultTmp=null;
 									try{
 										//记录最后一次电报时间
@@ -166,7 +178,17 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 								if(linkEtx.toString().equals(bytesToHexString("ETX".getBytes()))){
 									linkEtx.setLength(0);
 									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
-									msgQueue.add(new String(resultTmp));
+									try{
+										msgQueue.add(new String(resultTmp));
+									}catch(Throwable t){
+										logger.error("msgQueue插入队列失败",t);
+										// 断网、连接不上数据库时存入文件
+										Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+										String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+										String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+										DataBaseUtil.writeFileByLine(teleRestorFilePath+"msgQueue"+date+".txt",date+"时间开始接收异常:"+new String(resultTmp));
+									}
+
 									resultTmp=null;
 									try{
 										//记录最后一次电报时间
