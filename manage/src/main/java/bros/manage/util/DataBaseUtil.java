@@ -15,6 +15,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.dao.DataAccessException;
 
 import bros.manage.business.service.IJaiJAiltimeService;
 import bros.manage.business.service.ILogSysStatemService;
@@ -63,20 +64,36 @@ public class DataBaseUtil {
 		
 		// 获取ben
 		ITelReceiveQueueService itelReceiveQueueService = (ITelReceiveQueueService) SpringUtil.getBean("telReceiveQueueService");
-		try {
-			if(!DataBaseUtil.checkDBState("default")){
-				Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
-				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
-				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
-			}
-		} catch (Exception e3) {
-			logger.error("检查数据库状态失败",e3);
-		}
+//		try {
+//			if(!DataBaseUtil.checkDBState("default")){
+//				Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+//				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+//				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+//				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+//			}
+//		} catch (Exception e3) {
+//			logger.error("检查数据库状态失败",e3);
+//		}
 		try {
 			itelReceiveQueueService.addTelReceiveQueueInfo(contextMap);
 			// 存入电报接收队列时记录电报处理日志
 			saveReceiveQueueDealLog("电报接收", "新建", sql ,"成功","无", mainKey, "1" ,"电报接收","接收结果");
+		}catch(DataAccessException da){
+			Map<String, Object> propertiesMap;
+			try {
+				// 断网、连接不上数据库时存入文件
+				propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+				// 存入电报接收队列时记录电报处理日志
+				saveReceiveQueueDealLog("电报接收", "新建", sql ,"失败",da.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
+			} catch (ConfigurationException e1) {
+				logger.error("配置文件读取失败",e1);
+			}catch(Exception e2){
+				logger.error("记录数据库失败",e2);
+			}
+			logger.error("记录数据库失败",da);
 		} catch (Exception e) {
 			Map<String, Object> propertiesMap;
 			try {
@@ -90,7 +107,7 @@ public class DataBaseUtil {
 			} catch (ConfigurationException e1) {
 				logger.error("配置文件读取失败",e1);
 			}catch(Exception e2){
-				logger.error("记录数据库失败",e);
+				logger.error("记录数据库失败",e2);
 			}
 			logger.error("记录数据库失败",e);
 		}

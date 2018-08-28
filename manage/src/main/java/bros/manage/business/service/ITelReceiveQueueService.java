@@ -2,6 +2,8 @@ package bros.manage.business.service;
 
 import java.util.Map;
 
+import org.springframework.dao.DataAccessException;
+
 import bros.manage.exception.ServiceException;
 
 /**
@@ -10,5 +12,5 @@ import bros.manage.exception.ServiceException;
  *
  */
 public interface ITelReceiveQueueService {
-	public void addTelReceiveQueueInfo(Map<String, Object> contextMap) throws ServiceException;
+	public void addTelReceiveQueueInfo(Map<String, Object> contextMap) throws DataAccessException;
 }
