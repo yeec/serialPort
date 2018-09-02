@@ -494,6 +494,7 @@ public class MainWindow extends JFrame {
 		try {
 			//停止发送电报线程
 			stopSendThread();
+			
 			// 删除监听器
 			SerialPortManager.removeListener(sp);
 			// 关闭监听端口

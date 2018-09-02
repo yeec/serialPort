@@ -30,6 +30,7 @@ import bros.manage.main.MainWindow;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.druid.pool.GetConnectionTimeoutException;
+import com.alibaba.druid.stat.JdbcDataSourceStat;
 
 public class DataBaseUtil {
 	private static final Log logger = LogFactory.getLog(DataBaseUtil.class);
@@ -64,16 +65,7 @@ public class DataBaseUtil {
 		
 		// 获取ben
 		ITelReceiveQueueService itelReceiveQueueService = (ITelReceiveQueueService) SpringUtil.getBean("telReceiveQueueService");
-//		try {
-//			if(!DataBaseUtil.checkDBState("default")){
-//				Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
-//				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
-//				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-//				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
-//			}
-//		} catch (Exception e3) {
-//			logger.error("检查数据库状态失败",e3);
-//		}
+		
 		try {
 			itelReceiveQueueService.addTelReceiveQueueInfo(contextMap);
 			// 存入电报接收队列时记录电报处理日志
@@ -84,8 +76,12 @@ public class DataBaseUtil {
 				// 断网、连接不上数据库时存入文件
 				propertiesMap = PropertiesUtil.getDBPropertiesInfo();
 				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+				String ip = (String) propertiesMap.get("ip");
 				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
 				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+				MainWindow.mainBoard.addMsg("写库数据库状态异常:"+ip, LocalBoard.INFO_ERROR);
+				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
+				logger.error("写库库状态异常:"+ip);
 				// 存入电报接收队列时记录电报处理日志
 				saveReceiveQueueDealLog("电报接收", "新建", sql ,"失败",da.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
 			} catch (ConfigurationException e1) {
@@ -148,15 +144,13 @@ public class DataBaseUtil {
 	// 检测数据库状态
 	public static boolean checkDBState(String dataSourceName) throws Exception{
 		boolean flag = true;
-		DruidDataSource defaultDataSource = (DruidDataSource) new DynamicDataSource().getInstance().getDataSourceMap().get(dataSourceName);
 		try {
-			DruidPooledConnection dpc  = defaultDataSource.getConnection(2000);
-			Connection connection  = dpc.getConnection();
-			
-			if(null == connection || connection.isClosed()){ // 关闭状态
+			DruidDataSource ds = (DruidDataSource) DynamicDataSource.getInstance().getDataSourceMap().get("default");
+			DruidPooledConnection conn = ds.getConnection(6000);
+			if(conn.isClosed()){
 				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
-				flag = false;
-			}else{ // 非关闭状态
+				flag=false;
+			}else{
 				MainWindow.databaseStatus.setBackground(new java.awt.Color(0, 255, 0));
 				MainWindow.databaseStatus.repaint();
 				flag = true;
@@ -170,8 +164,36 @@ public class DataBaseUtil {
 			flag=false;
 			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
 			logger.error("检查数据库状态失败", e);
-			
+		}catch(Throwable t){
+			flag=false;
+			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
+			logger.error("检查数据库状态失败", t);
 		}
+//		boolean flag = true;
+//		DruidDataSource defaultDataSource = (DruidDataSource) new DynamicDataSource().getInstance().getDataSourceMap().get(dataSourceName);
+//		try {
+//			DruidPooledConnection dpc  = defaultDataSource.getConnection(2000);
+//			Connection connection  = dpc.getConnection();
+//			
+//			if(null == connection || connection.isClosed()){ // 关闭状态
+//				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
+//				flag = false;
+//			}else{ // 非关闭状态
+//				MainWindow.databaseStatus.setBackground(new java.awt.Color(0, 255, 0));
+//				MainWindow.databaseStatus.repaint();
+//				flag = true;
+//			}
+//		} catch(GetConnectionTimeoutException gte){
+//			flag=false;
+//			MainWindow.mainBoard.addMsg("数据库连接超时,请检查数据库配置!", LocalBoard.INFO_SYSTEM);
+//			//defaultDataSource.close();
+//			logger.error("数据库连接超时,请检查数据库配置",gte);
+//		}catch (SQLException e) {
+//			flag=false;
+//			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
+//			logger.error("检查数据库状态失败", e);
+//			
+//		}
 		
 		return flag;
 	}
@@ -289,6 +311,7 @@ public class DataBaseUtil {
 	}
 	
 	public static String getSql(String sqlId,Map<String,Object> contextMap ){
+		
 		SqlSessionFactory sqlSessionFactory = (SqlSessionFactory) SpringUtil.getBean("sqlSessionFactory");
         MyBatisSql sql = MyBatisSqlUtils.getMyBatisSql(sqlId, contextMap, sqlSessionFactory); 
         return sql.toString();

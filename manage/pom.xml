@@ -42,11 +42,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-		<!-- <dependency>
+		<dependency>
 		    <groupId>org.mybatis.spring.boot</groupId>
 		    <artifactId>mybatis-spring-boot-starter</artifactId>
 		    <version>1.1.1</version>
-		</dependency> -->
+		</dependency>
 		<!-- 配置 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -59,10 +59,7 @@
 		   <artifactId>druid-spring-boot-starter</artifactId>
 		   <version>1.1.6</version>
 		</dependency>
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-        </dependency>
+        
         <dependency>  
 		    <groupId>org.springframework.hateoas</groupId>  
 		    <artifactId>spring-hateoas</artifactId>  
@@ -78,12 +75,9 @@
 			<version>3.3.6</version>
 		</dependency>
 		
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-jdbc</artifactId>
-		</dependency>
+		
 
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis</artifactId>
 			<version>3.3.0</version>
@@ -92,7 +86,7 @@
 			<groupId>org.mybatis</groupId>
 			<artifactId>mybatis-spring</artifactId>
 			<version>1.2.4</version>
-		</dependency>
+		</dependency> -->
 		
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-configuration2 -->
 		<!-- https://mvnrepository.com/artifact/commons-configuration/commons-configuration -->
@@ -124,11 +118,7 @@
 	       <version>9.0</version>
 	    </dependency> -->
 	    <!-- c3p0数据源 -->
-	    <dependency>
-	       <groupId>c3p0</groupId>
-	       <artifactId>c3p0</artifactId>
-	       <version>0.9.1.2</version>
-		</dependency>
+
 	    <dependency>
 	    	<groupId>org.apache.poi</groupId>
 	    	<artifactId>poi</artifactId>
@@ -141,11 +131,6 @@
             <version>11.2.0.1.0</version>
         </dependency>
         
-        <dependency>
-		    <groupId>com.ibm.db2</groupId>
-		    <artifactId>db2jcc</artifactId>
-		    <version>8.1</version>
-		</dependency>
 	</dependencies>
 
 	<build>

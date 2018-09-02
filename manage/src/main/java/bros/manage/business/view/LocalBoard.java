@@ -93,8 +93,6 @@ private String logfileName;
 				this.repaint();
 			}
 		}
-//			this.setListData(data);
-//			this.updateUI();
 			
 	}
 	

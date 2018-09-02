@@ -19,6 +19,7 @@ import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
 import bros.manage.util.DataBaseUtil;
 import bros.manage.util.DateUtil;
+import bros.manage.util.JavaPing;
 import bros.manage.util.PropertiesUtil;
 
 /**
@@ -169,8 +170,17 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 									}
 									resultTmp=null;
 									try{
-										//记录最后一次电报时间
-										DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
+										Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+										String ip = (String)propertiesMap.get("ip");
+										if(!JavaPing.ping(ip, 30)){
+											MainWindow.mainBoard.addMsg("收报数据库网络不通:"+ip, LocalBoard.INFO_ERROR);
+											logger.error("收报数据库网络不通:"+ip);
+											Thread.sleep(5000);
+											continue;
+										}else{
+											//记录最后一次电报时间
+											DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
+										}
 									}catch(Exception e){
 										logger.error("更新最后一次接收电报时间失败");
 									}
@@ -202,6 +212,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 							
 	                	} catch (Exception e) {
 	                		logger.error("接收电报数据异常", e);
+	                		newData=-1;
 	                		continue;
 	    	            }
 	                }
@@ -238,7 +249,9 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 							logger.debug("第"+num+"次处理后电报："+result);
 	//						MainWindow.recieveBoard.setText("第" + num + "次接收电报:" + result + "\r\n");
 							MainWindow.recieveBoard.setText(result + "\r\n");
-	
+							if(!checkServerStatus(result)){
+								continue;
+							}
 							DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "NNNN" : "SOH");
 							DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
 							MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
@@ -258,6 +271,36 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 		} catch (Exception e) {
 			logger.error("处理接收电报队列线程异常", e);
 		}
+	}
+	
+	// 检测ping网络是否同
+	public static boolean checkServerStatus(String teletext){
+		boolean flag = true;
+		try {
+			Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+			String ip = (String)propertiesMap.get("ip");
+			if(!JavaPing.ping(ip, 30)){
+				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+				DataBaseUtil.writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+				MainWindow.mainBoard.addMsg("收报数据库网络不通:"+ip, LocalBoard.INFO_ERROR);
+				logger.error("收报数据库网络不通:"+ip);
+				flag = false;
+			}
+			if(!DataBaseUtil.checkDBState("default")){
+				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
+				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
+				DataBaseUtil.writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+				MainWindow.mainBoard.addMsg("收报数据库状态异常:"+ip, LocalBoard.INFO_ERROR);
+				logger.error("收报数据库状态异常:"+ip);
+				flag = false;
+			}
+		} catch (Exception e3) {
+			flag = false;
+			logger.error("检查数据库状态失败",e3);
+		}
+		
+		return flag;
 	}
 
 }

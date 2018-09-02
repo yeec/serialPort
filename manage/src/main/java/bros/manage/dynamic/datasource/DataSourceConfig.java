@@ -1,6 +1,7 @@
 package bros.manage.dynamic.datasource;
 
 import com.alibaba.druid.pool.DruidDataSource;
+
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
@@ -11,8 +12,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.sql.DataSource;
+
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Created by YHYR on 2017-12-25
@@ -53,6 +57,20 @@ public class DataSourceConfig {
         defaultDataSource.setUsername(defaultDBUser);
         defaultDataSource.setPassword(defaultDBPassword);
         defaultDataSource.setDriverClassName(defaultDBDreiverName);
+        defaultDataSource.setInitialSize(5);
+        defaultDataSource.setMinIdle(5);
+        defaultDataSource.setMaxActive(500);
+        defaultDataSource.setMaxWait(6000);
+        defaultDataSource.setTimeBetweenEvictionRunsMillis(6000);
+        defaultDataSource.setValidationQuery("SELECT 1 FROM DUAL");
+        defaultDataSource.setMinEvictableIdleTimeMillis(30000);
+        defaultDataSource.setTestWhileIdle(true);
+        defaultDataSource.setTestOnBorrow(true);
+        defaultDataSource.setTestOnReturn(true);
+        defaultDataSource.setPoolPreparedStatements(true);
+        defaultDataSource.setMaxPoolPreparedStatementPerConnectionSize(20);
+        defaultDataSource.setRemoveAbandonedTimeout(180);
+        defaultDataSource.setRemoveAbandoned(true);
 
 //        DruidDataSource masterDataSource = new DruidDataSource();
 //        masterDataSource.setDriverClassName(masterDBDreiverName);

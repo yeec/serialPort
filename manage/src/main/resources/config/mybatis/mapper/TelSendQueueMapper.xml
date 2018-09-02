@@ -61,7 +61,7 @@
 			(  
 			SELECT A.*, ROWNUM RN  
 			FROM (SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0') A  
-			WHERE ROWNUM <= 1
+			WHERE ROWNUM <= 10
 			)  
 			WHERE RN >= 0
 		]]>
