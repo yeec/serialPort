@@ -11,6 +11,7 @@
 		<result property="rec_ip" column="REC_IP" />
 		<result property="rec_mac" column="REC_MAC" />
 		<result property="userid" column="USERID" />
+		<result property="recId" column="REC_ID" />
     </resultMap>
 
     <sql id="telReceiveQueue" >
@@ -21,7 +22,8 @@
 		V_FLAG, 
 		REC_IP, 
 		REC_MAC, 
-		USERID
+		USERID,
+		REC_ID
     </sql>
 	
 	<!-- 查询电报接收队列表 -->
@@ -40,14 +42,16 @@
 			TELETEXT, 
 			REC_IP, 
 			REC_MAC, 
-			USERID
+			USERID,
+			REC_ID
 		 ) values (
 			 #{telId},
 			 sysdate,
 			 #{teletext},
 			 #{recIp},
 			 #{recMac}, 
-			 #{userid}
+			 #{userid},
+			 ATMTEL.REC_ID.NEXTVAL
 		)		
 	</insert>
 </mapper>

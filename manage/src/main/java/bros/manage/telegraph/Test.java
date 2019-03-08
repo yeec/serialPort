@@ -33,13 +33,15 @@ public class Test {
 //		sb.setLength(0);
 //		sb.append("d");
 //		System.out.println(sb.toString());
-		StringBuilder sb ;
-		while(true){
-			sb = new StringBuilder();
-			sb.append("sdaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-			System.out.println(sb.toString());
-		}
-
+//		StringBuilder sb ;
+//		while(true){
+//			sb = new StringBuilder();
+//			sb.append("sdaffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+//			System.out.println(sb.toString());
+//		}
+		String re = "wewewe$$ya$yaya";
+		re = java.util.regex.Matcher.quoteReplacement(re);
+		System.out.println(re);
 	}
 	
 	public static String bytesToHexString(byte[] bArr) {

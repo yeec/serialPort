@@ -4,49 +4,30 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.Banner.Mode;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ComponentScan;
 
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.dynamic.datasource.DataSourceContextHolder;
 import bros.manage.exception.ServiceException;
-import bros.manage.main.MainWindow;
-import bros.manage.util.DataBaseUtil;
 import bros.manage.util.DeviceInfo;
 import bros.manage.util.SpringUtil;
 
+@ComponentScan("bros")
 @SpringBootApplication
 public class NetUnionManageApplication {
-
+	
+	private static final  Logger logger = LoggerFactory.getLogger(NetUnionManageApplication.class);
+    
 	public static void main(String[] args) {
-//		SpringApplication.run(NetUnionManageApplication.class, args);
 		SpringApplication newRun= new SpringApplication(NetUnionManageApplication.class); 
 		newRun.setBannerMode(Mode.OFF);
-		newRun.run(args);
-		
-//		new MainWindow();
-//		try{
-//			log();
-//		}catch(ServiceException se){
-//			
-//		}
 	}
 	
-//	@Bean
-//	public HttpMessageConverters fastJsonHttpMessageConverters() {  
-//		FastJsonHttpMessageConverter fastConverter = new FastJsonHttpMessageConverter();  
-//		FastJsonConfig fastJsonConfig = new FastJsonConfig();
-//		fastJsonConfig.setSerializerFeatures(SerializerFeature.PrettyFormat);
-//		//附加：处理中文乱码（后期添加）
-//        List<MediaType> fastMedisTypes=new ArrayList<MediaType>();
-//        fastMedisTypes.add(MediaType.APPLICATION_JSON_UTF8);
-//        fastConverter.setSupportedMediaTypes(fastMedisTypes);
-//        
-//		fastConverter.setFastJsonConfig(fastJsonConfig);
-//		HttpMessageConverter<?> converter = fastConverter;
-//		return new HttpMessageConverters(converter);
-//	}
 	
 	public static void log() throws ServiceException{
 		DataSourceContextHolder.setDBType("default");
@@ -71,8 +52,12 @@ public class NetUnionManageApplication {
 			// 数据库参数设置界面, 记录系统状态日志
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
 		} catch (Exception e) {
+			logger.error("记录启动操作日志失败", e);
 			// 日志描述
-			String logMemo = "数据库参数组装失败, 错误信息:" + (e.getMessage());
+			String logMemo = "记录启动操作日志失败";
+			if(e instanceof ServiceException){
+				logMemo = logMemo+":"+((ServiceException)e).getErrorMsg();
+			}
 			saveLaunchLogMap.put("logMemo", logMemo);
 			// 系统状态
 			saveLaunchLogMap.put("sysState", "失败");
@@ -81,7 +66,6 @@ public class NetUnionManageApplication {
 			// 数据库参数设置界面, 记录系统状态日志
 			
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
-			e.printStackTrace();
 		}
 		try {
 			System.in.read();

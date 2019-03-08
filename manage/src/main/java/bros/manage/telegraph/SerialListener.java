@@ -5,8 +5,10 @@ import gnu.io.SerialPortEvent;
 import gnu.io.SerialPortEventListener;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -17,10 +19,10 @@ import org.apache.commons.logging.LogFactory;
 
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
-import bros.manage.util.DataBaseUtil;
-import bros.manage.util.DateUtil;
-import bros.manage.util.JavaPing;
-import bros.manage.util.PropertiesUtil;
+import bros.manage.thread.IndertDataHandler;
+import bros.manage.thread.ProcessEntity;
+import bros.manage.thread.ProcessThread;
+import bros.manage.thread.Queue;
 
 /**
  * 接收电报监听器
@@ -31,24 +33,16 @@ import bros.manage.util.PropertiesUtil;
 public class SerialListener extends Thread implements SerialPortEventListener {
 
 	private static final Log logger = LogFactory.getLog(SerialListener.class);
-	InputStream inputStream; // 从串口来的输入流
 	SerialPort port;
-	//缓存NNNN字符串
-	private StringBuilder linkWgt = new StringBuilder();
-	//缓存ETX字符串
-	private StringBuilder linkEtx = new StringBuilder();
-
 	public SerialListener(SerialPort port) throws IOException {
 		this.port = port;
-		this.inputStream = new BufferedInputStream(port.getInputStream());
 	}
 
 	private BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>();
 
 	// 报文处理线程停止位
 	private boolean stop = false;
-	
-	private byte[] resultTmp;
+	private int count1 = 0;
 	
 	private AtomicInteger receiveNum = new AtomicInteger(0);
 	private AtomicInteger count = new AtomicInteger(0);
@@ -89,7 +83,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 
 	    return sb.toString();
 	}
-	public void serialEvent(SerialPortEvent serialPortEvent) {
+	public synchronized void serialEvent(SerialPortEvent serialPortEvent) {
 		
 		switch (serialPortEvent.getEventType()) {
 			case SerialPortEvent.BI: // 10 通讯中断
@@ -121,98 +115,21 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 				break;
 			case SerialPortEvent.DATA_AVAILABLE: // 1 串口存在可用数据
 				try {
-					String sSubStr = "";
-					
+					InputStream inputStream = new BufferedInputStream(port.getInputStream());
 					byte[] readBuffer = new byte[1];
-					int newData = inputStream.read(readBuffer);
-					int i=0;
-					while (newData !=-1) {
+					ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+					
+					while (inputStream.read(readBuffer) !=-1) {
 	                	try {
-							
-								resultTmp = addBytes(resultTmp, readBuffer);
-								
-								// 把0~255的int转换成两位的16进制字符串
-	//							sSubStr = Integer.toHexString((newData & 0x000000FF) | 0xFFFFFF00);
-								sSubStr = bytesToHexString(readBuffer);
-								if(bytesToHexString("N".getBytes()).equalsIgnoreCase(sSubStr)){
-									linkWgt.append(sSubStr);
-								}else if(bytesToHexString("E".getBytes()).equalsIgnoreCase(sSubStr)){
-									linkEtx.setLength(0);
-									linkEtx.append(sSubStr);
-								}else if(bytesToHexString("T".getBytes()).equalsIgnoreCase(sSubStr)){
-									if(linkEtx.toString().equals(bytesToHexString("E".getBytes()))){
-										linkEtx.append(sSubStr);
-									}else{
-										linkEtx.setLength(0);
-									}
-								}else if(bytesToHexString("X".getBytes()).equalsIgnoreCase(sSubStr)){
-									if(linkEtx.toString().equals(bytesToHexString("ET".getBytes()))){
-										linkEtx.append(sSubStr);
-									}else{
-										linkEtx.setLength(0);
-									}
-								}else{
-									linkWgt.setLength(0);
-									linkEtx.setLength(0);
+								bytes.write(readBuffer);
+								String message = bytes.toString();
+								if(message.endsWith("NNNN") || message.endsWith("")){
+									logger.debug("第"+receiveNum.getAndIncrement()+"次读取电报："+message);
+									msgQueue.put(message);
+									bytes.reset();
 								}
-								if(linkWgt.toString().equals(bytesToHexString("NNNN".getBytes()))){
-									linkWgt.setLength(0);
-									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
-									try{
-										msgQueue.add(new String(resultTmp));
-									}catch(Throwable t){
-										logger.error("msgQueue插入队列失败",t);
-										// 断网、连接不上数据库时存入文件
-										Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
-										String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
-										String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-										DataBaseUtil.writeFileByLine(teleRestorFilePath+"msgQueue"+date+".txt",date+"时间开始接收异常:"+new String(resultTmp));
-									}
-									resultTmp=null;
-									try{
-										Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
-										String ip = (String)propertiesMap.get("ip");
-										if(!JavaPing.ping(ip, 30)){
-											MainWindow.mainBoard.addMsg("收报数据库网络不通:"+ip, LocalBoard.INFO_ERROR);
-											logger.error("收报数据库网络不通:"+ip);
-											Thread.sleep(5000);
-											continue;
-										}else{
-											//记录最后一次电报时间
-											DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
-										}
-									}catch(Exception e){
-										logger.error("更新最后一次接收电报时间失败");
-									}
-								}
-								if(linkEtx.toString().equals(bytesToHexString("ETX".getBytes()))){
-									linkEtx.setLength(0);
-									logger.debug("第"+receiveNum.getAndIncrement()+"次接收到电报："+new String(resultTmp,"UTF-8"));
-									try{
-										msgQueue.add(new String(resultTmp));
-									}catch(Throwable t){
-										logger.error("msgQueue插入队列失败",t);
-										// 断网、连接不上数据库时存入文件
-										Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
-										String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
-										String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-										DataBaseUtil.writeFileByLine(teleRestorFilePath+"msgQueue"+date+".txt",date+"时间开始接收异常:"+new String(resultTmp));
-									}
-
-									resultTmp=null;
-									try{
-										//记录最后一次电报时间
-										DataBaseUtil.updateJaiJailtime("TEL_SENDREC_REC_LASTTIME");
-									}catch(Exception e){
-										logger.error("更新最后一次接收电报时间失败");
-									}
-								}
-								readBuffer = new byte[1];
-								newData = inputStream.read(readBuffer);
-							
 	                	} catch (Exception e) {
 	                		logger.error("接收电报数据异常", e);
-	                		newData=-1;
 	                		continue;
 	    	            }
 	                }
@@ -227,6 +144,11 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 
 	@Override
 	public void run() {
+		String taskId = "insertId";
+		int poolSize = 10;
+		int queueSize = 20;
+		int limit = 1;
+		ProcessThread.init(taskId, poolSize, queueSize, limit);
 		try {
 			logger.info("--------------任务处理线程运行了--------------");
 			while (!stop) {
@@ -235,33 +157,14 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 					if (msgQueue.size() > 0) {
 						String sb = msgQueue.take();
 						int num = count.incrementAndGet();
-						logger.debug("第"+num+"次读取电报："+sb);
-						String result = null;
-						if(sb.lastIndexOf("ZCZC")!=-1 && sb.indexOf("NNNN")!=-1 && sb.lastIndexOf("ZCZC")<sb.indexOf("NNNN")){
-							result = sb.substring(sb.lastIndexOf("ZCZC"), sb.indexOf("NNNN")+4);
-						}
-						if(null==result || "".equals(result)){
-							if(sb.lastIndexOf("SOH")!=-1 && sb.indexOf("ETX")!=-1 && sb.lastIndexOf("SOH")<sb.indexOf("ETX")){
-								result = sb.substring(sb.lastIndexOf("SOH"), sb.indexOf("ETX")+3);
-							}
-						}
-						if(null!=result && !"".equals(result)){
-							logger.debug("第"+num+"次处理后电报："+result);
-	//						MainWindow.recieveBoard.setText("第" + num + "次接收电报:" + result + "\r\n");
-							MainWindow.recieveBoard.setText(result + "\r\n");
-							if(!checkServerStatus(result)){
-								continue;
-							}
-							DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "NNNN" : "SOH");
-							DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
-							MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
-							if (MainWindow.serialPortStatus.getBackground().getRed() == 0) {
-								MainWindow.serialPortStatus.setBackground(new java.awt.Color(255, 0, 0));
-							} else {
-								MainWindow.serialPortStatus.setBackground(new java.awt.Color(0, 255, 0));
-								MainWindow.serialPortStatus.repaint();
-							}
-						}
+						logger.debug("第"+num+"次处理电报："+sb);
+						
+						Map<String,Object> data = new HashMap<String, Object>();
+						data.put("message", sb);
+						data.put("num", num+"");
+						IndertDataHandler indertDataHandler = new IndertDataHandler();
+						ProcessEntity entity = new ProcessEntity(data,indertDataHandler);
+						Queue.getInstance().getQueue(taskId, 1).put(entity);
 					}
 				} catch (Exception e) {
 					logger.error("处理接收电报数据线程异常", e);
@@ -272,35 +175,4 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 			logger.error("处理接收电报队列线程异常", e);
 		}
 	}
-	
-	// 检测ping网络是否同
-	public static boolean checkServerStatus(String teletext){
-		boolean flag = true;
-		try {
-			Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
-			String ip = (String)propertiesMap.get("ip");
-			if(!JavaPing.ping(ip, 30)){
-				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
-				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-				DataBaseUtil.writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
-				MainWindow.mainBoard.addMsg("收报数据库网络不通:"+ip, LocalBoard.INFO_ERROR);
-				logger.error("收报数据库网络不通:"+ip);
-				flag = false;
-			}
-			if(!DataBaseUtil.checkDBState("default")){
-				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
-				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-				DataBaseUtil.writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
-				MainWindow.mainBoard.addMsg("收报数据库状态异常:"+ip, LocalBoard.INFO_ERROR);
-				logger.error("收报数据库状态异常:"+ip);
-				flag = false;
-			}
-		} catch (Exception e3) {
-			flag = false;
-			logger.error("检查数据库状态失败",e3);
-		}
-		
-		return flag;
-	}
-
 }

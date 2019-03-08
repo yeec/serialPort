@@ -14,6 +14,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -22,18 +23,14 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import org.apache.commons.configuration.ConfigurationException;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
-import bros.manage.dynamic.datasource.DataSourceContextHolder;
-import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
+import bros.manage.util.JDBCUtil;
 import bros.manage.util.PropertiesUtil;
 import bros.manage.util.SpringUtil;
-
-import com.alibaba.druid.pool.DruidDataSource;
 
 
 // 参数设置子窗口
@@ -359,28 +356,40 @@ public class JDialogOptions extends javax.swing.JDialog {
 	}
 	
 	// 加载串口配置参数
-	private void LoadSPParameters(){
-		// 
-		List<String>  commList = SerialPortManager.findPort();
-		// 检查是否有可用串口，有则加入选项中
-		if (commList == null || commList.size() < 1) {
-//			ShowUtils.warningMessage("没有搜索到有效串口！");
-			MainWindow.mainBoard.addMsg("没有搜索到有效串口！", LocalBoard.INFO_SYSTEM);
-		} else {
-			for (String s : commList) {
-				jComboBoxPortName.addItem(s);
-				MainWindow.mainBoard.addMsg("搜索到有效串口:"+ s, LocalBoard.INFO_SYSTEM);
+	private void LoadSPParameters() throws ServiceException{
+		Map<String, Object> dbMap;
+		try {
+			dbMap = PropertiesUtil.getDBPropertiesDiskInfo();
+			// 
+			List<String>  commList = SerialPortManager.findPort();
+			// 检查是否有可用串口，有则加入选项中
+			if (commList == null || commList.size() < 1) {
+	//			ShowUtils.warningMessage("没有搜索到有效串口！");
+				MainWindow.mainBoard.addMsg("没有搜索到有效串口！", LocalBoard.INFO_SYSTEM);
+			} else {
+				String portName = (String)dbMap.get("portName");
+				for (int i = 0; i < commList.size(); i++) {
+					jComboBoxPortName.addItem(commList.get(i));
+					if(portName != null && commList.get(i).equals(portName)){
+						serialParameters.setPortName((String)jComboBoxPortName.getItemAt(i));
+					}
+					MainWindow.mainBoard.addMsg("搜索到有效串口:"+ commList.get(i), LocalBoard.INFO_SYSTEM);
+				}
 			}
+			
+			if(serialParameters.getPortName() == null){
+				serialParameters.setPortName((String)jComboBoxPortName.getItemAt(0));
+			}
+			jComboBoxPortName.setSelectedItem(serialParameters.getPortName());
+			jComboBoxDatabits.setSelectedItem(serialParameters.getDatabitsString());
+			jComboBoxBaudRate.setSelectedItem(serialParameters.getBaudRateString());
+			jComboBoxParity.setSelectedItem(serialParameters.getParityString());
+			jComboBoxStopbits.setSelectedItem(serialParameters.getStopbitsString());
+			jComboBoxFlowCtlIn.setSelectedItem(serialParameters.getFlowControlInString());
+			jComboBoxFlowCtlOut.setSelectedItem(serialParameters.getFlowControlOutString());
+		} catch (ConfigurationException e) {
+			throw new ServiceException("读取数据库配置文件失败",e);
 		}
-		
-		serialParameters.setPortName((String)jComboBoxPortName.getItemAt(0));
-		jComboBoxPortName.setSelectedItem(serialParameters.getParityString());
-		jComboBoxDatabits.setSelectedItem(serialParameters.getDatabitsString());
-		jComboBoxBaudRate.setSelectedItem(serialParameters.getBaudRateString());
-		jComboBoxParity.setSelectedItem(serialParameters.getParityString());
-		jComboBoxStopbits.setSelectedItem(serialParameters.getStopbitsString());
-		jComboBoxFlowCtlIn.setSelectedItem(serialParameters.getFlowControlInString());
-		jComboBoxFlowCtlOut.setSelectedItem(serialParameters.getFlowControlOutString());
 	};
 	
 	private void initDBInfo() throws ServiceException{
@@ -412,7 +421,6 @@ public class JDialogOptions extends javax.swing.JDialog {
 	private void jButtonOKMouseClicked(MouseEvent evt) throws ServiceException {
 		try {
 			
-			
 			String portName = jComboBoxPortName.getSelectedItem().toString();// 端口
 			String baudRate = jComboBoxBaudRate.getSelectedItem().toString();// 波特率
 			String databits= jComboBoxDatabits.getSelectedItem().toString();// 数据位
@@ -439,27 +447,18 @@ public class JDialogOptions extends javax.swing.JDialog {
 			String password =jTextFieldPassword.getText();// 密码
 			String svrName=jTextFieldServiceName.getText();// 服务名
 			
+			if(!JDBCUtil.isValidateConnection(ip, port, svrName, userName, password)){
+				JOptionPane.showMessageDialog(this, "数据库配置有误，请确认!");
+				return;
+			}
 			
-			/**
-			 * 通过页面定义数据库配置
-			 */
-//			DruidDataSource dynamicDataSource = new DruidDataSource();
-//			dynamicDataSource.setDriverClassName("oracle.jdbc.OracleDriver");
-//			dynamicDataSource.setUrl("jdbc:oracle:thin:@"+ip+":"+port+":"+svrName);
-//			dynamicDataSource.setUsername(userName);
-//			dynamicDataSource.setPassword(password);
-			
-			/**
-			 * 创建动态数据源
-			 */
-//			Map<Object, Object> dataSourceMap = DynamicDataSource.getInstance().getDataSourceMap();
-//			dataSourceMap.put("default", dynamicDataSource);
-//			DynamicDataSource.getInstance().setTargetDataSources(dataSourceMap);
-			
-			/**
-			 * 切换为动态数据源实例
-			 */
-//			DataSourceContextHolder.setDBType("default");
+			//如果更改数据库配置
+			Map<String, Object> dbMap1 = PropertiesUtil.getDBPropertiesDiskInfo();
+			String fileDbIp = (String) dbMap1.get("ip");
+			String fileDbPort = (String) dbMap1.get("port");
+			String fileDbUserName = (String) dbMap1.get("username");
+			String fileDbPassword = (String) dbMap1.get("password");
+			String fileDbSvrName = (String) dbMap1.get("svrName");
 			
 			Map<String, Object> dbMap = new HashMap<String, Object>();
 			// 数据库参数
@@ -470,6 +469,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 			dbMap.put("svrName", svrName);
 			
 			// 串口参数
+			dbMap.put("portName", portName);
 			dbMap.put("baudRate", baudRate);
 			dbMap.put("databits", databits);
 			dbMap.put("stopbits", stopbits);
@@ -478,13 +478,17 @@ public class JDialogOptions extends javax.swing.JDialog {
 			dbMap.put("flowControlOut", flowControlOut);
 		
 			PropertiesUtil.setDBPropertiesInfo(dbMap);
+			this.dispose();
+			// 数据库配置有一项修改，都需要重新加载
+			if(!fileDbIp.equals(ip) || !fileDbPort.equals(port) || !fileDbUserName.equals(userName) || !fileDbPassword.equals(password) || !fileDbSvrName.equals(svrName)){
+				ContextTemp.dabaseIp = ip;
+				MainWindow.restart();
+			}
 		} catch (ConfigurationException e) {
 			throw new ServiceException("串口设定和数据库设置失败",e);
 		}catch(Exception ex){
 			throw new ServiceException("串口设定和数据库设置失败",ex);
 		}
-
-		this.dispose();
 	}
 
 	public SerialParameters getSerialParameters() {

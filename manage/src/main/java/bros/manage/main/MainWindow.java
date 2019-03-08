@@ -11,7 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,12 +31,12 @@ import javax.swing.text.DefaultCaret;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
 import bros.manage.NetUnionManageApplication;
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DataSourceContextHolder;
-import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
 import bros.manage.telegraph.SerialListener;
 import bros.manage.telegraph.SerialSendThread;
@@ -46,6 +45,7 @@ import bros.manage.telegraph.exception.NotASerialPort;
 import bros.manage.telegraph.exception.PortInUse;
 import bros.manage.telegraph.exception.SerialPortParameterFailure;
 import bros.manage.telegraph.exception.TooManyListeners;
+import bros.manage.thread.PingThread;
 import bros.manage.util.DataBaseUtil;
 import bros.manage.util.DeviceInfo;
 import bros.manage.util.SpringUtil;
@@ -53,6 +53,10 @@ import bros.manage.util.SpringUtil;
 // 程序主窗口界面初始化
 //@SpringBootApplication
 public class MainWindow extends JFrame {
+	
+	private static String[] args;
+    private static ConfigurableApplicationContext context;
+//    private static MainWindow window;
 	
 	private static final Log logger = LogFactory.getLog(MainWindow.class);
 
@@ -97,7 +101,7 @@ public class MainWindow extends JFrame {
 	// 串口对象
 	private SerialPort sp;
 	// 串口参数对象
-	private SerialParameters serialParameters;
+//	private SerialParameters serialParameters;
 	//发送电报线程
 	private SerialSendThread thread;
 	//串口监听
@@ -159,6 +163,7 @@ public class MainWindow extends JFrame {
 	 * 初始化控件
 	 */
 	private void initComponents() {
+		
 		try {
 
 			// 菜单对象
@@ -394,7 +399,7 @@ public class MainWindow extends JFrame {
 	 * @param evt
 	 */
 	private void configMenuItemActionPerformed(ActionEvent evt) {
-		serialParameters = new JDialogOptions(this).getSerialParameters();
+		ContextTemp.serialParameters = new JDialogOptions(this).getSerialParameters();
 
 	}
 
@@ -404,7 +409,7 @@ public class MainWindow extends JFrame {
 	 * @param evt
 	 */
 	private void jButtonConfigMouseClicked(MouseEvent evt) {
-		serialParameters = new JDialogOptions(this).getSerialParameters();
+		ContextTemp.serialParameters = new JDialogOptions(this).getSerialParameters();
 	}
 
 	/**
@@ -439,7 +444,7 @@ public class MainWindow extends JFrame {
 	}
 
 	private void startActionPerformed(ActionEvent evt) {
-
+		
 		startTelegram();
 //		jButtonStart.setEnabled(false);
 //		jButtonStop.setEnabled(true);
@@ -447,6 +452,8 @@ public class MainWindow extends JFrame {
 //		configMenuItem.setEnabled(false);
 //		startMenuItem.setEnabled(false);
 //		stopMenuItem.setEnabled(true);
+		
+//		CvsDataUtil.read();
 	}
 	
 	/**
@@ -511,9 +518,12 @@ public class MainWindow extends JFrame {
 			// 电报收发系统接收发送状态改变日志
 			logSysStatemService.addLogSysStatemInfo(stopTelegramMap);
 		} catch (Exception e) {
-			
+			logger.error("电报收发系统停止失败",e);
 			// 日志描述
-			String logMemo = "电报收发系统停止失败, 错误信息:" + (e.getMessage());
+			String logMemo = "电报收发系统停止失败";
+			if(e instanceof ServiceException){
+				logMemo = logMemo+":"+((ServiceException)e).getErrorMsg();
+			}
 			stopTelegramMap.put("logMemo", logMemo);
 			// 系统状态
 			stopTelegramMap.put("sysState", "失败");
@@ -523,8 +533,7 @@ public class MainWindow extends JFrame {
 			try {
 				logSysStatemService.addLogSysStatemInfo(stopTelegramMap);
 			} catch (ServiceException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				logger.error("记录系统状态日志异常", e1);
 			}
 		}
 	}
@@ -551,7 +560,7 @@ public class MainWindow extends JFrame {
 			ILogSysStatemService logSysStatemService = (ILogSysStatemService) SpringUtil.getBean("logSysStatemService");
 			if (!initSP()) {
 				// 日志描述
-				String logMemo = "电报收发系统接收初始化失败, 错误信息:" + (new IllegalStateException("初始化失败"));
+				String logMemo = "电报收发系统接收初始化失败";
 				startTelegramMap.put("logMemo", logMemo);
 				// 系统状态
 				startTelegramMap.put("sysState", "失败");
@@ -589,12 +598,17 @@ public class MainWindow extends JFrame {
 	}
 	
 	private void startSendThread(){
+		//启动ping线程
+		PingThread pt = PingThread.getInstance();
+		pt.startT();
 		thread = new SerialSendThread(sp);
 		thread.start();
 		MainWindow.mainBoard.addMsg("发送电报线程启动.", LocalBoard.INFO_SYSTEM);
 	}
 	
 	private void stopSendThread(){
+		PingThread pt = PingThread.getInstance();
+		pt.stopT();
 		if(null!=thread){
 			thread.stopSafely();
 			thread.stop();
@@ -604,14 +618,14 @@ public class MainWindow extends JFrame {
 
 	private boolean initSP() {
 		try {
-			if(null == serialParameters){
+			if(null == ContextTemp.serialParameters){
 				JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
-				serialParameters = new JDialogOptions(this).getSerialParameters();
+				ContextTemp.serialParameters = new JDialogOptions(this).getSerialParameters();
 				MainWindow.mainBoard.addMsg("请先设置收发报参数。", LocalBoard.INFO_SYSTEM);
 				return false;
 			}
 			if(null==sp){
-				sp = SerialPortManager.openPort(serialParameters);
+				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
 			}
 			//InputStream inputStream = sp.getInputStream();
 			sl = new SerialListener(sp);
@@ -648,23 +662,24 @@ public class MainWindow extends JFrame {
 	
 	public static void main(String[] args) throws ServiceException {
 		
-		// 加载sping容器
+		// 加载spring容器
 		try{
-			SpringApplication.run(NetUnionManageApplication.class, args);
-			new MainWindow();
+			MainWindow.args = args;
+			MainWindow.context = SpringApplication.run(NetUnionManageApplication.class, args);
+			if(ContextTemp.window==null){
+				ContextTemp.window = new MainWindow();
+			}
 			
 			if(!DataBaseUtil.checkDBState("default")){
 				MainWindow.mainBoard.addMsg("数据库参数配置错误,请检查配置!", LocalBoard.INFO_SYSTEM);
 				return;
 			}
 		}catch(Exception e){
+			logger.error("数据库参数组装失败",e);
 			throw new ServiceException();
 		}
 		
-		
 		DataSourceContextHolder.setDBType("default");
-		
-		
 		
 		// 组装正常记录日志入参（数据库参数设置）
 		Map<String, Object> saveLaunchLogMap = new HashMap<String, Object>();
@@ -686,8 +701,12 @@ public class MainWindow extends JFrame {
 			// 数据库参数设置界面, 记录系统状态日志
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
 		} catch (Exception e) {
+			logger.error("记录操作日志失败",e);
 			// 日志描述
-			String logMemo = "数据库参数组装失败, 错误信息:" + (e.getMessage());
+			String logMemo = "记录操作日志失败" ;
+			if(e instanceof ServiceException){
+				logMemo = logMemo+":"+((ServiceException)e).getErrorMsg();
+			}
 			saveLaunchLogMap.put("logMemo", logMemo);
 			// 系统状态
 			saveLaunchLogMap.put("sysState", "失败");
@@ -696,13 +715,20 @@ public class MainWindow extends JFrame {
 			// 数据库参数设置界面, 记录系统状态日志
 			
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
-			e.printStackTrace();
 		}
-		try {
-			System.in.read();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			System.in.read();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+	}
+	public static void restart() {
+		
+	    //关闭spring上下文
+	 	MainWindow.context.close();
+	 	//重启
+        MainWindow.context = SpringApplication.run(NetUnionManageApplication.class, args);
+        SpringUtil.setApplicationContextNew(MainWindow.context);
 	}
 }

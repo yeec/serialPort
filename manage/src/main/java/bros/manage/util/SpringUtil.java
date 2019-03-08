@@ -34,6 +34,9 @@ public class SpringUtil implements ApplicationContextAware {
 
         logger.info("---------------------------------------------------------------------");
     }
+    public static void setApplicationContextNew(ApplicationContext applicationContext){
+    	SpringUtil.applicationContext = applicationContext;
+    }
 
     //获取applicationContext
     public static ApplicationContext getApplicationContext() {

@@ -3,6 +3,8 @@ package bros.manage.business.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.dao.DataAccessException;
+
 /**
  * 
  * @author liwei
@@ -14,4 +16,6 @@ public interface ITelSendQueueService {
 	public List<Map<String, Object>> queryTelSendInfo();
 	// 更新发送电报列表中发送标志为0，更新为1
 	public void updateTelSendInfo(Map <String,Object> contextMap);
+	// 新增发送电报
+	public void addTelSendInfo(Map<String, Object> contextMap);
 }

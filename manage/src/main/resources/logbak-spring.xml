@@ -33,7 +33,7 @@
 	    <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
 	    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
 	        <!--文件路径,定义了日志的切分方式——每个文件大小${filesize}，超过大小重新建一个文件，日志文件放到当前日期的文件夹下-->
-	        <FileNamePattern>${logdir}/%d{yyyy-MM-dd}/${appname}.%d{HHmmss.SSS}.%i.log</FileNamePattern>
+	        <FileNamePattern>${logdir}/%d{yyyy-MM-dd}/${appname}.%d{HHmmssSSS}.%i.log</FileNamePattern>
 	        <!--只保留最近90天的日志-->
 	        <maxHistory>90</maxHistory>
 	        <!--用来指定日志文件的上限大小，那么到了这个值，就会删除旧的日志-->
@@ -62,7 +62,7 @@
 	    <!--滚动策略，按照时间滚动 TimeBasedRollingPolicy-->
 	    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
 	        <!--文件路径,定义了日志的切分方式——每个文件大小${filesize}，超过大小重新建一个文件，日志文件放到当前日期的文件夹下-->
-	        <FileNamePattern>${logdir}/%d{yyyy-MM-dd}/error.${appname}.%d{HHmmss.SSS}.%i.log</FileNamePattern>
+	        <FileNamePattern>${logdir}/%d{yyyy-MM-dd}/error.${appname}.%d{HHmmssSSS}.%i.log</FileNamePattern>
 	        <!--只保留最近90天的日志-->
 	        <maxHistory>90</maxHistory>
 	        <!--用来指定日志文件的上限大小，那么到了这个值，就会删除旧的日志-->

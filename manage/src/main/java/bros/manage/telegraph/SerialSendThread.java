@@ -33,7 +33,8 @@ public class SerialSendThread extends Thread {
 	public SerialSendThread(SerialPort sp) {
 		super();
 		this.sp = sp;
-		this.runbit = false;
+		//TODO：发报开关：true：开；false:关
+		this.runbit = true;
 	}
 
 
@@ -59,7 +60,7 @@ public class SerialSendThread extends Thread {
 					continue;
 				}
 				String ip = (String)propertiesMap.get("ip");
-				if(!JavaPing.ping(ip, 30)){
+				if(!JavaPing.pingDbHost()){
 					MainWindow.mainBoard.addMsg("发报数据库网络不通:"+ip, LocalBoard.INFO_ERROR);
 					logger.error("发报数据库网络不通:"+ip);
 					Thread.sleep(5000);
@@ -110,7 +111,7 @@ public class SerialSendThread extends Thread {
 				// 电报发送模块异常捕捉：记录系统运行日志
 				DataBaseUtil.saveSendExceptionLog("运行","异常",e.getMessage().toString(), "3");
 				// 更新发送电报标志位：记录电报处理日志
-				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位(SEND_FLAG)更新为已发送","发送电报");
+				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 				MainWindow.mainBoard.addMsg("串口写数据失败[SendDataToSerialPortFailure]", LocalBoard.INFO_SYSTEM);
 				logger.error("串口写数据失败",e);
 				continue;
@@ -122,7 +123,7 @@ public class SerialSendThread extends Thread {
 				// 电报发送模块异常捕捉：记录系统运行日志
 				DataBaseUtil.saveSendExceptionLog("运行","异常",e.getMessage().toString(), "3");
 				// 更新发送电报标志位：记录电报处理日志
-				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位(SEND_FLAG)更新为已发送","发送电报");
+				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 				MainWindow.mainBoard.addMsg("串口写数据失败[SerialPortOutputStreamCloseFailure]", LocalBoard.INFO_SYSTEM);
 				logger.error("串口写数据失败",e);
 				continue;
@@ -134,7 +135,7 @@ public class SerialSendThread extends Thread {
 				// 电报发送模块异常捕捉：记录系统运行日志
 				DataBaseUtil.saveSendExceptionLog("运行","异常",e.getMessage().toString(), "3");
 				// 更新发送电报标志位：记录电报处理日志
-				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位(SEND_FLAG)更新为已发送","发送电报");
+				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 				MainWindow.mainBoard.addMsg("发送电报失败[UnsupportedEncodingException]", LocalBoard.INFO_SYSTEM);
 				logger.error("发送电报失败",e);
 				continue;
@@ -146,7 +147,7 @@ public class SerialSendThread extends Thread {
 				// 电报发送模块异常捕捉：记录系统运行日志
 				DataBaseUtil.saveSendExceptionLog("运行","异常",e.getMessage().toString(), "3");
 				// 更新发送电报标志位：记录电报处理日志
-				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位(SEND_FLAG)更新为已发送","发送电报");
+				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 				MainWindow.mainBoard.addMsg("发送电报失败[InterruptedException]", LocalBoard.INFO_SYSTEM);
 				logger.error("发送电报失败",e);
 				continue;
@@ -158,7 +159,7 @@ public class SerialSendThread extends Thread {
 				// 电报发送模块异常捕捉：记录系统运行日志
 				DataBaseUtil.saveSendExceptionLog("运行","异常",t.getMessage().toString(), "3");
 				// 更新发送电报标志位：记录电报处理日志
-				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",t.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位(SEND_FLAG)更新为已发送","发送电报");
+				DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",t.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 				MainWindow.mainBoard.addMsg("发送电报失败[Throwable]", LocalBoard.INFO_SYSTEM);
 				logger.error("发送电报失败",t);
 				continue;

@@ -11,6 +11,7 @@ import org.apache.commons.logging.LogFactory;
 
 import bros.manage.business.view.LocalBoard;
 import bros.manage.main.MainWindow;
+import bros.manage.thread.PingThread;
 
 public class JavaPing {
 	private static final Log logger = LogFactory.getLog(JavaPing.class);
@@ -48,6 +49,12 @@ public class JavaPing {
 			MainWindow.databaseStatus.repaint();
 		}
 		return flag;
+	}
+	
+	// ÐÂping·½Ê½
+	public static boolean pingDbHost(){
+		PingThread pt1 = PingThread.getInstance();
+		return pt1.isPingFlag();
 	}
 
 	/*
