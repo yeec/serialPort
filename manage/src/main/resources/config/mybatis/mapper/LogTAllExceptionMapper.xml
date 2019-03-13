@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bros.manage.business.mapper.LogTAllExceptionMapper" >
+    <!-- 记录收发电报失败日志表-->
+	<insert id="insertLogTAllException" parameterType="java.util.HashMap">
+		 insert into ATMLOG.LOG_T_ALL_EXCEPTION (
+			LOG_NUM,    
+			LOG_TIME,   
+			LOG_SYS,    
+			LOG_FUN,    
+			LOG_TYPE,   
+			LOG_SQL,    
+			LOG_RESULT, 
+			LOG_MEMO,   
+			MAINKEY,    
+			LOG_GRADE,  
+			LOG_CLASS,  
+			USERID,     
+			DEAL_NUM,   
+			DEAL_TYPE,  
+			DEAL_MEMO, 
+			DEAL_COME,   
+			DATA_OBJECT,    
+			OLD_DATA,      
+			NEW_DATA,       
+			DELA_IP,  
+			DELA_MAC,
+			LOG_NAME
+		 ) values (
+			ATMLOG.LOG_SEQ_ID.NEXTVAL,
+			sysdate,   
+			'电报收发系统',    
+			#{logFun},    
+			#{logType},   
+			#{logSql},    
+			'失败', 
+			#{logMemo},   
+			#{mainkey},    
+			'3',  
+			'值班',  
+			'SYSTEM_TEL',     
+			1,   
+			#{dealType},  
+			#{dealMemo}, 
+			'',   
+			'',    
+			'',      
+			'',       
+			#{delaIp},  
+			#{delaMac},
+			'TEL_T_TELLOG'
+		)		
+	</insert>
+</mapper>

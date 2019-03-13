@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bros.manage.business.mapper.TelReceiveQueueMapper" >
+    <resultMap id="tellerMap" type="java.util.HashMap" >
+        <result property="tel_id" column="TEL_ID" />
+		<result property="rec_date" column="REC_DATE" />
+		<result property="teletext" column="TELETEXT" />
+		<result property="tele_flag" column="TELE_FLAG" />
+		<result property="v_flag" column="V_FLAG" />
+		<result property="rec_ip" column="REC_IP" />
+		<result property="rec_mac" column="REC_MAC" />
+		<result property="userid" column="USERID" />
+		<result property="recId" column="REC_ID" />
+    </resultMap>
+
+    <sql id="telReceiveQueue" >
+		TEL_ID, 
+		REC_DATE, 
+		TELETEXT, 
+		TELE_FLAG, 
+		V_FLAG, 
+		REC_IP, 
+		REC_MAC, 
+		USERID,
+		REC_ID
+    </sql>
+	
+	<!-- 查询电报接收队列表 -->
+    <select id="getTelReceiveInfo" resultMap="tellerMap"  >
+       SELECT 
+       		<include refid="telReceiveQueue" />
+       FROM 
+       		TEL_T_RECEIVE_QUEUE
+    </select>
+    
+    <!-- 记录电报接收队列表 -->
+	<insert id="insertTelReceiveInfo" parameterType="java.util.HashMap">
+		 insert into TEL_T_RECEIVE_QUEUE (
+			TEL_ID, 
+			REC_DATE, 
+			TELETEXT, 
+			REC_IP, 
+			REC_MAC, 
+			USERID,
+			REC_ID
+		 ) values (
+			 #{telId},
+			 sysdate,
+			 #{teletext},
+			 #{recIp},
+			 #{recMac}, 
+			 #{userid},
+			 ATMTEL.REC_ID.NEXTVAL
+		)		
+	</insert>
+</mapper>
