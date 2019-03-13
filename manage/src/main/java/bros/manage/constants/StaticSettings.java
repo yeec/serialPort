@@ -6,8 +6,9 @@ public class StaticSettings {
 	
 	
 	public final static Color errColor = Color.RED;
-	public final static Color sysInfoColor = Color.YELLOW;
+	public final static Color sysInfoColor = Color.WHITE;
 	public final static Color dataInfoColor = Color.GREEN;
+	
 	
 	public final static int displayBufferSize = 1000; 
 	

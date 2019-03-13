@@ -102,7 +102,33 @@ public class PropertiesUtil {
 			logger.error("读取数据库配置文件信息失败",e);
 			throw e;
 		}
-		
+	}
+	
+	/**
+	 * 读取数据库配置文件信息
+	 * @return Map
+	 * @throws ConfigurationException
+	 */
+	public static String getPropertiesByKey(String key) throws ConfigurationException{
+		PropertiesConfiguration conf = null;
+		try {
+			
+			PropertiesConfiguration pconf = new PropertiesConfiguration("application.properties");
+			String filePath = pconf.getString("dbPropertiesFilePath");
+			// 获取配置文件中的路径
+			
+			File file = new File(filePath);
+			if(!file.exists()){
+				conf = new PropertiesConfiguration("application.properties");
+			}else{
+				conf = new PropertiesConfiguration(filePath);
+			}
+			String value = conf.getString(key);
+			return value;
+		} catch (ConfigurationException e) {
+			logger.error("读取数据库配置文件信息失败",e);
+			throw e;
+		}
 	}
 	
 	/**

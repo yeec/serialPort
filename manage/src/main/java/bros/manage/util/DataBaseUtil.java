@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,8 +18,10 @@ import org.springframework.dao.DataAccessException;
 
 import bros.manage.business.service.IJaiJAiltimeService;
 import bros.manage.business.service.ILogSysStatemService;
+import bros.manage.business.service.ILogTAllExceptionService;
 import bros.manage.business.service.ILogTellogService;
 import bros.manage.business.service.ITelReceiveQueueService;
+import bros.manage.business.service.ITelSysStatusService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DynamicDataSource;
 import bros.manage.entity.MyBatisSql;
@@ -30,7 +31,6 @@ import bros.manage.main.MainWindow;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidPooledConnection;
 import com.alibaba.druid.pool.GetConnectionTimeoutException;
-import com.alibaba.druid.stat.JdbcDataSourceStat;
 
 public class DataBaseUtil {
 	private static final Log logger = LogFactory.getLog(DataBaseUtil.class);
@@ -61,7 +61,13 @@ public class DataBaseUtil {
 		
 		// 获取执行SQL
 		String sqlId = "bros.manage.business.mapper.TelReceiveQueueMapper.insertTelReceiveInfo";
-		String sql = getSql(sqlId,contextMap);
+		String sql = "";
+		try{
+		  sql = getSql(sqlId,contextMap);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		
 		
 		// 获取ben
 		ITelReceiveQueueService itelReceiveQueueService = (ITelReceiveQueueService) SpringUtil.getBean("telReceiveQueueService");
@@ -157,16 +163,16 @@ public class DataBaseUtil {
 			}
 		} catch(GetConnectionTimeoutException gte){
 			flag=false;
-			MainWindow.mainBoard.addMsg("数据库连接超时,请检查数据库配置!", LocalBoard.INFO_SYSTEM);
+			MainWindow.mainBoard.addMsg("数据库连接超时,请检查数据库配置!", LocalBoard.INFO_ERROR);
 			//defaultDataSource.close();
 			logger.error("数据库连接超时,请检查数据库配置",gte);
 		}catch (SQLException e) {
 			flag=false;
-			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
+			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_ERROR);
 			logger.error("检查数据库状态失败", e);
 		}catch(Throwable t){
 			flag=false;
-			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
+			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_ERROR);
 			logger.error("检查数据库状态失败", t);
 		}
 //		boolean flag = true;
@@ -283,6 +289,20 @@ public class DataBaseUtil {
 			 contextMap.put("dealType", dealType);
 			 contextMap.put("dealMemo", dealMemo);
 			logTellogService.addLogTellogInfo(contextMap);
+			
+			if("失败".equals(logResult)){
+				Map<String,Object> LogTAllExceptionMap = new HashMap<String, Object>();
+				LogTAllExceptionMap.put("logFun", logFun);
+				LogTAllExceptionMap.put("logType", logType);
+				LogTAllExceptionMap.put("logSql", logSQL);
+				LogTAllExceptionMap.put("logMemo", logMemo);
+				LogTAllExceptionMap.put("mainkey", mainKey);
+				LogTAllExceptionMap.put("dealType", dealType);
+				LogTAllExceptionMap.put("dealMemo", dealMemo);
+				LogTAllExceptionMap.put("delaIp", DeviceInfo.getDeviceIp());
+				LogTAllExceptionMap.put("delaMac", DeviceInfo.getDeviceMAC());
+				saveLogTAllException(LogTAllExceptionMap);
+			}
 		} catch (ServiceException e) {
 			logger.error("记录数据库失败",e);
 		}
@@ -305,6 +325,9 @@ public class DataBaseUtil {
 			contextMap.put("delaMac", DeviceInfo.getDeviceMAC()); // 操作机器MAC
 			
 			logSysStatemService.addLogSysStatemInfo(contextMap);
+			
+			
+			
 		} catch (ServiceException e) {
 			logger.error("记录数据库失败",e);
 		}
@@ -315,5 +338,50 @@ public class DataBaseUtil {
 		SqlSessionFactory sqlSessionFactory = (SqlSessionFactory) SpringUtil.getBean("sqlSessionFactory");
         MyBatisSql sql = MyBatisSqlUtils.getMyBatisSql(sqlId, contextMap, sqlSessionFactory); 
         return sql.toString();
+	}
+	
+	
+	
+	// 记录当前系统运行状态
+	public static void saveSysStatusInfo(String sysStatusText) throws ServiceException{
+		try {
+			ITelSysStatusService telSysStatusService = (ITelSysStatusService) SpringUtil.getBean("telSysStatusService");
+			// 组装记录当前系统的状态入参
+			Map<String, Object> telSysStatusMap = new HashMap<String, Object>();
+			
+			// 主键
+			final String telId = UUID.randomUUID().toString();
+			telSysStatusMap.put("telId", telId);
+			// 程序运行所在服务器IP
+			telSysStatusMap.put("sysIp", DeviceInfo.getDeviceIp());
+			// 当前状态
+			telSysStatusMap.put("sysStatus", sysStatusText);
+			
+			Map<String, Object> propertiesMap = PropertiesUtil.getDBPropertiesInfo();
+			// 数据库服务器IP
+			telSysStatusMap.put("sysDatabase", (String) propertiesMap.get("ip"));
+			
+			// 查询当前运行系统运行状态表记录
+			int count = telSysStatusService.queryTelSysStatus();
+			if(count > 0){
+				// 更新
+				telSysStatusService.updateTelSysStatus(telSysStatusMap);
+			}else{
+				// 添加纪录
+				telSysStatusService.addTelSysStatus(telSysStatusMap);
+			}
+		} catch (ConfigurationException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 系统本身现在有做一个电报处理日志的功能，用到的表(LOG_T_TELLOG),这张表对某个操作不管成功还是失败都要记录下在，
+	 * 现在要做的是，如果某个操作失败了，同时也要把失败的记录到这张表（LOG_T_ALL_EXCEPTION ）
+	 * @param contextMap
+	 */
+	public static void saveLogTAllException(Map<String,Object> contextMap) throws ServiceException{
+		ILogTAllExceptionService logTAllExceptionService = (ILogTAllExceptionService) SpringUtil.getBean("logTAllExceptionService");
+		logTAllExceptionService.addLogTAllException(contextMap);
 	}
 }

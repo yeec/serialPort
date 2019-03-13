@@ -87,16 +87,16 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 		
 		switch (serialPortEvent.getEventType()) {
 			case SerialPortEvent.BI: // 10 通讯中断
-				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_SYSTEM);
+				MainWindow.mainBoard.addMsg("与串口设备通讯中断", LocalBoard.INFO_ERROR);
 				break;
 			case SerialPortEvent.OE: // 7 溢位（溢出）错误
-				MainWindow.mainBoard.addMsg("溢位（溢出）错误", LocalBoard.INFO_SYSTEM);
+				MainWindow.mainBoard.addMsg("溢位（溢出）错误", LocalBoard.INFO_ERROR);
 				break;
 			case SerialPortEvent.FE: // 9 帧错误
-				MainWindow.mainBoard.addMsg("帧错误", LocalBoard.INFO_SYSTEM);
+				MainWindow.mainBoard.addMsg("帧错误", LocalBoard.INFO_ERROR);
 				break;
 			case SerialPortEvent.PE: // 8 奇偶校验错误
-				MainWindow.mainBoard.addMsg("帧错误奇偶校验错误", LocalBoard.INFO_SYSTEM);
+				MainWindow.mainBoard.addMsg("帧错误奇偶校验错误", LocalBoard.INFO_ERROR);
 				break;
 			case SerialPortEvent.CD: // 6 载波检测
 				MainWindow.mainBoard.addMsg("载波检测", LocalBoard.INFO_SYSTEM);
@@ -134,7 +134,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	    	            }
 	                }
 				} catch (IOException e) {
-					MainWindow.mainBoard.addMsg("接收电报数据异常,请检查COM口连接是否正常", LocalBoard.INFO_LOG);
+					MainWindow.mainBoard.addMsg("接收电报数据异常,请检查COM口连接是否正常", LocalBoard.INFO_ERROR);
 	            	logger.error("接收电报数据异常,请检查COM口连接是否正常", e);
 				}
 			break;

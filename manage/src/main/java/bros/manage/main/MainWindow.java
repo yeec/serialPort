@@ -28,6 +28,7 @@ import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 import javax.swing.text.DefaultCaret;
 
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.boot.SpringApplication;
@@ -37,6 +38,7 @@ import bros.manage.NetUnionManageApplication;
 import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DataSourceContextHolder;
+import bros.manage.entity.SerialParameters;
 import bros.manage.exception.ServiceException;
 import bros.manage.telegraph.SerialListener;
 import bros.manage.telegraph.SerialSendThread;
@@ -48,6 +50,7 @@ import bros.manage.telegraph.exception.TooManyListeners;
 import bros.manage.thread.PingThread;
 import bros.manage.util.DataBaseUtil;
 import bros.manage.util.DeviceInfo;
+import bros.manage.util.PropertiesUtil;
 import bros.manage.util.SpringUtil;
 
 // 程序主窗口界面初始化
@@ -421,6 +424,8 @@ public class MainWindow extends JFrame {
 		this.dispose();
 		try{
 			stopTelegram();
+			// 记录系统运行状态
+			DataBaseUtil.saveSysStatusInfo("退出");
 		}catch(Exception e){
 			logger.error("系统退出异常",e);
 		}finally{
@@ -517,6 +522,10 @@ public class MainWindow extends JFrame {
 			stopTelegramMap.put("logGrade", "1");
 			// 电报收发系统接收发送状态改变日志
 			logSysStatemService.addLogSysStatemInfo(stopTelegramMap);
+			
+			// 记录系统运行状态
+			DataBaseUtil.saveSysStatusInfo("停止");
+			
 		} catch (Exception e) {
 			logger.error("电报收发系统停止失败",e);
 			// 日志描述
@@ -566,8 +575,6 @@ public class MainWindow extends JFrame {
 				startTelegramMap.put("sysState", "失败");
 				// 日志等级
 				startTelegramMap.put("logGrade", "1");
-				// 电报收发系统接收发送状态改变日志
-				
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
 			} else {
 				jButtonStart.setEnabled(false);
@@ -586,6 +593,8 @@ public class MainWindow extends JFrame {
 				startTelegramMap.put("logGrade", "1");
 				// 电报收发系统接收发送状态改变日志
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
+				// 记录系统运行状态
+				DataBaseUtil.saveSysStatusInfo("运行");
 			}
 		} catch (ServiceException e) {
 			JOptionPane.showMessageDialog(this, e.getErrorMsg());
@@ -619,10 +628,26 @@ public class MainWindow extends JFrame {
 	private boolean initSP() {
 		try {
 			if(null == ContextTemp.serialParameters){
-				JOptionPane.showMessageDialog(this, "配置未找到!\n请先编辑配置!");
-				ContextTemp.serialParameters = new JDialogOptions(this).getSerialParameters();
-				MainWindow.mainBoard.addMsg("请先设置收发报参数。", LocalBoard.INFO_SYSTEM);
-				return false;
+				//如果更改数据库配置
+				ContextTemp.serialParameters= new SerialParameters();
+				Map<String, Object> dbMap = PropertiesUtil.getDBPropertiesDiskInfo();
+				String portName = (String) dbMap.get("portName");// 端口
+				String baudRate = (String) dbMap.get("baudRate");// 波特率
+				String databits= (String) dbMap.get("databits");// 数据位
+				String stopbits= (String) dbMap.get("stopbits");// 奇偶校验
+				String parity= (String) dbMap.get("parity");// 停止位
+				String flowControlIn= (String) dbMap.get("flowControlIn");// 输入流控制
+				String flowControlOut= (String) dbMap.get("flowControlOut");// 输出流控制
+				
+				// 串口参数设置
+				ContextTemp.serialParameters.setPortName(portName);// 端口
+				ContextTemp.serialParameters.setBaudRate(baudRate);// 波特率
+				ContextTemp.serialParameters.setDatabits(databits);// 数据位
+				ContextTemp.serialParameters.setStopbits(stopbits);// 奇偶校验
+				ContextTemp.serialParameters.setParity(parity);// 停止位
+				ContextTemp.serialParameters.setFlowControlIn(flowControlIn);// 输入流控制
+				ContextTemp.serialParameters.setFlowControlOut(flowControlOut);// 输出流控制
+				
 			}
 			if(null==sp){
 				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
@@ -635,28 +660,35 @@ public class MainWindow extends JFrame {
 			//启动发送电报线程
 			startSendThread();
 		} catch (SerialPortParameterFailure e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg("设置串口参数失败", LocalBoard.INFO_ERROR);
+			logger.error("设置串口参数失败", e);
+			return false;
 		} catch (NotASerialPort e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg("不是一个有效串口", LocalBoard.INFO_ERROR);
+			logger.error("不是一个有效串口", e);
+			return false;
 		} catch (NoSuchPort e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg("无此串口", LocalBoard.INFO_ERROR);
+			logger.error("无此串口", e);
+			return false;
 		} catch (PortInUse e) {
-			MainWindow.mainBoard.addMsg(e.toString(), LocalBoard.INFO_SYSTEM);
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg("串口被占用", LocalBoard.INFO_ERROR);
+			logger.error("串口被占用", e);
 			return false;
 		} catch (TooManyListeners e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg("监听器纯在多个", LocalBoard.INFO_ERROR);
+			logger.error("监听器纯在多个", e);
+			return false;
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			MainWindow.mainBoard.addMsg("串口初始化失败", LocalBoard.INFO_ERROR);
+			logger.error("串口初始化失败", e);
+			return false;
+		} catch (ConfigurationException e) {
+			MainWindow.mainBoard.addMsg("读取串口参数配置失败", LocalBoard.INFO_ERROR);
+			logger.error("读取串口参数配置失败", e);
+			return false;
 		}
-
 		return true;
-
 	}
 	
 	
@@ -671,7 +703,7 @@ public class MainWindow extends JFrame {
 			}
 			
 			if(!DataBaseUtil.checkDBState("default")){
-				MainWindow.mainBoard.addMsg("数据库参数配置错误,请检查配置!", LocalBoard.INFO_SYSTEM);
+				MainWindow.mainBoard.addMsg("数据库参数配置错误,请检查配置!", LocalBoard.INFO_ERROR);
 				return;
 			}
 		}catch(Exception e){
@@ -700,6 +732,7 @@ public class MainWindow extends JFrame {
 			saveLaunchLogMap.put("logGrade", "1");
 			// 数据库参数设置界面, 记录系统状态日志
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
+			
 		} catch (Exception e) {
 			logger.error("记录操作日志失败",e);
 			// 日志描述
