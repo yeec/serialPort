@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE mapper PUBLIC '-//mybatis.org//DTD Mapper 3.0//EN' 
+'http://mybatis.org/dtd/mybatis-3-mapper.dtd'>
+<mapper namespace='bros.manage.business.mapper.TelSendQueueBakMapper' >
+    <resultMap id='telSendQueueMap' type='java.util.HashMap' >
+        <result property='tel_id' column='TEL_ID' />
+		<result property='send_date' column='SEND_DATE' />
+		<result property='tel_type' column='TEL_TYPE' />
+		<result property='eleid' column='ELEID' />
+		<result property='turnid' column='TURNID' />
+		<result property='rectime' column='RECTIME' />
+		<result property='tel_level' column='TEL_LEVEL' />
+		<result property='recaddress' column='RECADDRESS' />
+		<result property='sendaddress' column='SENDADDRESS' />
+		<result property='sendtime' column='SENDTIME' />
+		<result property='plan_id' column='PLAN_ID' />
+		<result property='tel_text' column='TEL_TEXT' />
+		<result property='userid' column='USERID' />
+		<result property='send_flag' column='SEND_FLAG' />
+		<result property='originaltxt' column='ORIGINALTXT' />
+		<result property='send_ip' column='SEND_IP' />
+		<result property='send_mac' column='SEND_MAC' />
+		<result property='old_tel_id' column='OLD_TEL_ID' />
+		<result property='flightnumber' column='FLIGHTNUMBER' />
+		<result property='startloc' column='STARTLOC' />
+		<result property='endloc' column='ENDLOC' />
+		<result property='insert_time' column='INSERT_TIME' />
+    </resultMap>
+
+    <sql id='telSendQueueBak' >
+		TEL_ID,
+		SEND_DATE,
+		TEL_TYPE,
+		ELEID,
+		TURNID,
+		RECTIME,
+		TEL_LEVEL,
+		RECADDRESS,
+		SENDADDRESS,
+		SENDTIME,
+		PLAN_ID,
+		TEL_TEXT,
+		USERID,
+		SEND_FLAG,
+		ORIGINALTXT,
+		SEND_IP,
+		SEND_MAC,
+		OLD_TEL_ID,
+		FLIGHTNUMBER,
+		STARTLOC,
+		ENDLOC,
+		INSERT_TIME
+    </sql>
+	
+	<!-- 发送电报队列备份表 -->
+	<insert id='insertTelSendInfoBak' parameterType='java.util.HashMap'>
+		 insert into ATMTEL.TEL_T_SEND_QUEUE_BAK (
+			<include refid="telSendQueueBak" />
+		 ) values (
+			#{tel_id},
+			#{send_date},
+			#{tel_type,jdbcType=VARCHAR},
+			#{eleid,jdbcType=VARCHAR},
+			#{turnid,jdbcType=VARCHAR},
+			#{rectime,jdbcType=VARCHAR},
+			#{tel_level,jdbcType=VARCHAR},
+			#{recaddress,jdbcType=VARCHAR},
+			#{sendaddress,jdbcType=VARCHAR},
+			#{sendtime,jdbcType=VARCHAR},
+			#{plan_id,jdbcType=VARCHAR},
+			#{tel_text,jdbcType=VARCHAR},
+			#{userid,jdbcType=VARCHAR},
+			'1',
+			#{originaltxt,jdbcType=VARCHAR},
+			#{send_ip,jdbcType=VARCHAR},
+			#{send_mac,jdbcType=VARCHAR},
+			#{old_tel_id,jdbcType=VARCHAR},
+			#{flightnumber,jdbcType=VARCHAR},
+			#{startloc,jdbcType=VARCHAR},
+			#{endloc,jdbcType=VARCHAR},
+			sysdate
+		)		
+	</insert>
+	
+	<!-- 发送电报队列备份表 -->
+	<insert id='insertTelTAllSend' parameterType='java.util.HashMap'>
+		 insert into ATMTEL.TEL_T_ALLSEND (
+			<include refid="telSendQueueBak" />
+		 ) values (
+			#{tel_id},
+			#{send_date},
+			#{tel_type,jdbcType=VARCHAR},
+			#{eleid,jdbcType=VARCHAR},
+			#{turnid,jdbcType=VARCHAR},
+			#{rectime,jdbcType=VARCHAR},
+			#{tel_level,jdbcType=VARCHAR},
+			#{recaddress,jdbcType=VARCHAR},
+			#{sendaddress,jdbcType=VARCHAR},
+			#{sendtime,jdbcType=VARCHAR},
+			#{plan_id,jdbcType=VARCHAR},
+			#{tel_text,jdbcType=VARCHAR},
+			#{userid,jdbcType=VARCHAR},
+			'1',
+			#{originaltxt,jdbcType=VARCHAR},
+			#{send_ip,jdbcType=VARCHAR},
+			#{send_mac,jdbcType=VARCHAR},
+			#{old_tel_id,jdbcType=VARCHAR},
+			#{flightnumber,jdbcType=VARCHAR},
+			#{startloc,jdbcType=VARCHAR},
+			#{endloc,jdbcType=VARCHAR},
+			sysdate
+		)		
+	</insert>
+</mapper>

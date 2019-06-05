@@ -51,19 +51,19 @@
 		ENDLOC,
 		INSERT_TIME
     </sql>
-	
-	<!-- 查询电报发送列表 -->
-    <select id='getTelSendInfo' resultMap='telSendQueueMap'  >
-    	<![CDATA[
-	       SELECT
+	<!-- SELECT
 	        *
 	        FROM  
 			(  
 			SELECT A.*, ROWNUM RN  
-			FROM (SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0') A  
+			FROM (SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by SEND_DATE,TURNID) A  
 			WHERE ROWNUM <= 10
 			)  
-			WHERE RN >= 0
+			WHERE RN >= 0 -->
+	<!-- 查询电报发送列表 -->
+    <select id='getTelSendInfo' resultMap='telSendQueueMap'  >
+    	<![CDATA[
+			SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by SEND_DATE,TURNID
 		]]>
     </select>
     
@@ -73,6 +73,13 @@
 		SET SEND_FLAG='1'
 		WHERE TEL_ID=#{tel_id}
 	</update>
+	
+	 <!-- 删除电报发送列表 -->
+    <update id='deleteTelSendInfo'  parameterType='java.util.HashMap'>
+		DELETE from TEL_T_SEND_QUEUE
+		WHERE TEL_ID=#{tel_id}
+	</update>
+	
 	<!-- 记录电报接收队列表 -->
 	<insert id='insertTelSendInfo' parameterType='java.util.HashMap'>
 		 insert into TEL_T_SEND_QUEUE (
