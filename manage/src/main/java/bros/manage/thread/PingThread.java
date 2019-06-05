@@ -62,11 +62,12 @@ public class PingThread extends Thread{
 							ContextTemp.dabaseIp = ip;
 						}
 						InetAddress ad = InetAddress.getByName(ip);
-						boolean stat = ad.isReachable(5000);
+						boolean stat = ad.isReachable(10000);
 						if(stat){
 							pingFlag = true;
 						}else{
 							pingFlag = false;
+							logger.error("数据库网络ping不通："+ip);
 						}
 					} catch (UnknownHostException e) {
 						pingFlag = false;

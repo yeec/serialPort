@@ -46,7 +46,9 @@ public class JaiJAiltimeServiceImpl implements IJaiJAiltimeService{
 	@Override
 	public int updateJaiJailtimeinfo(Map<String, Object> contextMap) throws ServiceException{
 		try{
-			return jaiJAiltimeMapper.updateJaiJailtimeinfo(contextMap);
+			synchronized(this){
+				return jaiJAiltimeMapper.updateJaiJailtimeinfo(contextMap);
+			}
 		}catch (Exception e) {
 			logger.error("Exception from " + this.getClass().getName() + "'s updateJaiJailtimeinfo method.", e);
 			throw new ServiceException(ServiceErrorCodeContants.EBMT0001, "记录操作日志失败", e);

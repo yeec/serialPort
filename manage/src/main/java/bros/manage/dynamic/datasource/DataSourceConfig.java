@@ -64,18 +64,19 @@ public class DataSourceConfig {
         defaultDataSource.setUsername(defaultDBUser);
         defaultDataSource.setPassword(defaultDBPassword);
         defaultDataSource.setDriverClassName(defaultDBDreiverName);
-        defaultDataSource.setInitialSize(5);
-        defaultDataSource.setMinIdle(5);
-        defaultDataSource.setMaxActive(500);
-        defaultDataSource.setMaxWait(6000);
-        defaultDataSource.setTimeBetweenEvictionRunsMillis(6000);
+        defaultDataSource.setInitialSize(10);//初始化时建立物理连接的个数。初始化发生在显示调用init方法，或者第一次getConnection时
+        defaultDataSource.setMinIdle(10);//最小连接池数量
+        defaultDataSource.setMaxActive(500);//最大连接池数量
+        defaultDataSource.setMaxWait(6000);//获取连接时最大等待时间，单位毫秒。配置了maxWait之后，缺省启用公平锁，并发效率会有所下降，如果需要可以通过配置useUnfairLock属性为true使用非公平锁
+        defaultDataSource.setTimeBetweenEvictionRunsMillis(1000);//配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 
         defaultDataSource.setValidationQuery("SELECT 1 FROM DUAL");
-        defaultDataSource.setMinEvictableIdleTimeMillis(30000);
-        defaultDataSource.setTestWhileIdle(true);
+//        defaultDataSource.setMinEvictableIdleTimeMillis(30000);
+        
+        defaultDataSource.setTestWhileIdle(false);
         defaultDataSource.setTestOnBorrow(true);
-        defaultDataSource.setTestOnReturn(true);
-        defaultDataSource.setPoolPreparedStatements(true);
-        defaultDataSource.setMaxPoolPreparedStatementPerConnectionSize(20);
+        defaultDataSource.setTestOnReturn(false);
+        defaultDataSource.setPoolPreparedStatements(false);
+        defaultDataSource.setMaxPoolPreparedStatementPerConnectionSize(1);
         defaultDataSource.setRemoveAbandonedTimeout(180);
         defaultDataSource.setRemoveAbandoned(true);
 

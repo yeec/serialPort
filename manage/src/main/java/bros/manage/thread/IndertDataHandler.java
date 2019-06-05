@@ -73,7 +73,7 @@ public class IndertDataHandler implements DealHandler {
 				DataBaseUtil.writeFileByLine(teleRestorFilePath+date+".txt",dateTemp+"时间开始接收异常:"+teletext);
 				MainWindow.mainBoard.addMsg("收报数据库网络不通:"+ip, LocalBoard.INFO_ERROR);
 				logger.error("收报数据库网络不通:"+ip);
-				flag = false;
+				return false;
 			}
 			if(!DataBaseUtil.checkDBState("default")){
 				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
@@ -82,7 +82,7 @@ public class IndertDataHandler implements DealHandler {
 				DataBaseUtil.writeFileByLine(teleRestorFilePath+date+".txt",dateTemp+"时间开始接收异常:"+teletext);
 				MainWindow.mainBoard.addMsg("收报数据库状态异常:"+ip, LocalBoard.INFO_ERROR);
 				logger.error("收报数据库状态异常:"+ip);
-				flag = false;
+				return false;
 			}
 		} catch (Exception e3) {
 			flag = false;

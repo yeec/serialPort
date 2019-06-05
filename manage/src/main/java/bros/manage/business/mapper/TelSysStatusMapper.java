@@ -13,5 +13,5 @@ public interface TelSysStatusMapper {
 	// 更新当前系统的状态表
 	public int updateTelSysStatus(Map<String, Object> contextMap);
 	// 查询当前系统的状态表
-    public int getTelSysStatus();
+    public int getTelSysStatus(Map<String, Object> contextMap);
 }

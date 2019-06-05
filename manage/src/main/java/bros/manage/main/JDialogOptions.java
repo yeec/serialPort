@@ -137,6 +137,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 					"9600", "19200", "38400", "57600", "115200", "230400", "460800" });
 			jComboBoxBaudRate = new JComboBox();
 			jPanelSPOptions.add(jComboBoxBaudRate);
+			//jComboBoxBaudRate.setEditable(ContextTemp.configSetFlag);
 			jComboBoxBaudRate.setModel(jComboBoxBaudRateModel);
 			jComboBoxBaudRate.setBounds(145, 50, 200, 20);
 			jComboBoxBaudRate.setFont(new java.awt.Font("Dialog", 1, 18));
@@ -225,15 +226,18 @@ public class JDialogOptions extends javax.swing.JDialog {
 			LoadSPParameters();
 
 			jButtonReset = new JButton();
+			jButtonReset.setEnabled(ContextTemp.configSetFlag);
 			jPanelSPOptions.add(jButtonReset);
 			jButtonReset.setText("恢复默认值");
 			jButtonReset.setBounds(211, 231, 133, 20);
 			jButtonReset.setFont(new java.awt.Font("Dialog", 1, 18));
-			jButtonReset.addMouseListener(new MouseAdapter() {
-				public void mouseClicked(MouseEvent evt) {
-					 jButtonResetMouseClicked(evt);
-				}
-			});
+			if(ContextTemp.configSetFlag){
+				jButtonReset.addMouseListener(new MouseAdapter() {
+					public void mouseClicked(MouseEvent evt) {
+						jButtonResetMouseClicked(evt);
+					}
+				});
+			}
 
 			jPanelDBOptions = new JPanel();
 			jTabbedPaneOptions.addTab("数据库参数设置", null, jPanelDBOptions, null);
@@ -267,24 +271,29 @@ public class JDialogOptions extends javax.swing.JDialog {
 			
 			
 			jTextFieldServerAddress = new JTextField();
+			jTextFieldServerAddress.setEditable(ContextTemp.configSetFlag);
 			jPanelDBOptions.add(jTextFieldServerAddress);
 			jTextFieldServerAddress.setBounds(36, 45, 160, 22);
 			jTextFieldServerAddress.setFont(new java.awt.Font("Dialog",0,18));
 			
 			jTextFieldServerPort = new JTextField();
+			jTextFieldServerPort.setEditable(ContextTemp.configSetFlag);
 			jPanelDBOptions.add(jTextFieldServerPort);
 			jTextFieldServerPort.setBounds(206, 45, 54, 23);
 			jTextFieldServerPort.setFont(new java.awt.Font("Dialog",0,18));
 			
 			jTextFieldUsername = new JTextField();
+			jTextFieldUsername.setEditable(ContextTemp.configSetFlag);
 			jPanelDBOptions.add(jTextFieldUsername);
 			jTextFieldUsername.setBounds(36, 95, 130, 22);
 			
 			jTextFieldPassword = new JTextField();
+			jTextFieldPassword.setEditable(ContextTemp.configSetFlag);
 			jPanelDBOptions.add(jTextFieldPassword);
 			jTextFieldPassword.setBounds(36, 145, 130, 20);
 			
 			jTextFieldServiceName = new JTextField();
+			jTextFieldServiceName.setEditable(ContextTemp.configSetFlag);
 			jPanelDBOptions.add(jTextFieldServiceName);
 			jTextFieldServiceName.setBounds(36, 195, 130, 20);
 			
@@ -304,18 +313,21 @@ public class JDialogOptions extends javax.swing.JDialog {
 			jButtonOK = new JButton();
 			this.getContentPane().add(jButtonOK);
 			jButtonOK.setText("确定");
+			jButtonOK.setEnabled(ContextTemp.configSetFlag);
 			jButtonOK.setBounds(193, 301, 80, 20);
 			jButtonOK.setFont(new java.awt.Font("Dialog",1,18));
-			jButtonOK.addMouseListener(new MouseAdapter() {
-				public void mouseClicked(MouseEvent evt) {
-					try {
-						jButtonOKMouseClicked(evt);
-					} catch (ServiceException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+			if(ContextTemp.configSetFlag){
+				jButtonOK.addMouseListener(new MouseAdapter() {
+					public void mouseClicked(MouseEvent evt) {
+						try {
+							jButtonOKMouseClicked(evt);
+						} catch (ServiceException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 					}
-				}
-			});
+				});
+			}
 			
 			
 			jButtonCancel = new JButton();
@@ -356,6 +368,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 	}
 	
 	// 加载串口配置参数
+	@SuppressWarnings("unchecked")
 	private void LoadSPParameters() throws ServiceException{
 		Map<String, Object> dbMap;
 		try {
@@ -380,6 +393,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 			if(serialParameters.getPortName() == null){
 				serialParameters.setPortName((String)jComboBoxPortName.getItemAt(0));
 			}
+			
 			jComboBoxPortName.setSelectedItem(serialParameters.getPortName());
 			jComboBoxDatabits.setSelectedItem(serialParameters.getDatabitsString());
 			jComboBoxBaudRate.setSelectedItem(serialParameters.getBaudRateString());
@@ -387,6 +401,15 @@ public class JDialogOptions extends javax.swing.JDialog {
 			jComboBoxStopbits.setSelectedItem(serialParameters.getStopbitsString());
 			jComboBoxFlowCtlIn.setSelectedItem(serialParameters.getFlowControlInString());
 			jComboBoxFlowCtlOut.setSelectedItem(serialParameters.getFlowControlOutString());
+			
+			jComboBoxPortName.setEnabled(ContextTemp.configSetFlag);
+			jComboBoxDatabits.setEnabled(ContextTemp.configSetFlag);
+			jComboBoxBaudRate.setEnabled(ContextTemp.configSetFlag);
+			jComboBoxParity.setEnabled(ContextTemp.configSetFlag);
+			jComboBoxStopbits.setEnabled(ContextTemp.configSetFlag);
+			jComboBoxFlowCtlIn.setEnabled(ContextTemp.configSetFlag);
+			jComboBoxFlowCtlOut.setEnabled(ContextTemp.configSetFlag);
+			
 		} catch (ConfigurationException e) {
 			throw new ServiceException("读取数据库配置文件失败",e);
 		}

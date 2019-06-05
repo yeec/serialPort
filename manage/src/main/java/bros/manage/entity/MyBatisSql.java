@@ -43,10 +43,17 @@ public class MyBatisSql
         List<Object> list = new ArrayList<Object>(parametersArray);
         while(sql.indexOf("?") != -1 && list.size() > 0 && parameters.length > 0)
         {
-        	String param = list.get(0).toString();
+        	Object obj = list.get(0);
+        	String param = "";
+        	if(obj!=null){
+        		param = list.get(0).toString();
+        	}else{
+        		param = "";
+        	}
         	param = param.replaceAll("\\$", "#ADS_DORLAR#");
             sql = sql.replaceFirst("\\?", param);
             list.remove(0);
+        	
         }
         return sql.replaceAll("(\r?\n(\\s*\r?\n)+)", "\r\n").replaceAll("#ADS_DORLAR#", "\\$");
     }

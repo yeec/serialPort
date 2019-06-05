@@ -53,9 +53,9 @@ public class TelSysStatusServiceImpl implements ITelSysStatusService{
 
 	@Override
 	// 查询当前系统的状态表
-	public int queryTelSysStatus() throws ServiceException {
+	public int queryTelSysStatus(Map<String, Object> contextMap) throws ServiceException {
 		try{
-			return TelSysStatusMapper.getTelSysStatus();
+			return TelSysStatusMapper.getTelSysStatus(contextMap);
 		}catch (Exception e) {
 			logger.error("Exception from " + this.getClass().getName() + "'s queryTelSysStatus method.", e);
 			throw new ServiceException(ServiceErrorCodeContants.EBMT0001, "查询当前系统的状态失败", e);

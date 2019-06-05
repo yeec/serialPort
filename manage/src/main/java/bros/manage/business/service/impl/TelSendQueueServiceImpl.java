@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import bros.manage.business.mapper.TelSendQueueMapper;
@@ -40,6 +39,12 @@ public class TelSendQueueServiceImpl  implements ITelSendQueueService{
 	public void addTelSendInfo(Map<String, Object> contextMap) {
 		telSendQueueMapper.insertTelSendInfo(contextMap);
 		
+	}
+
+	// 删除发送电报
+	@Override
+	public int deleteTelSendInfo(Map<String, Object> contextMap) {
+		return telSendQueueMapper.deleteTelSendInfo(contextMap);
 	}
 	
 	

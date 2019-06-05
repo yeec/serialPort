@@ -21,6 +21,8 @@ import bros.manage.business.service.ILogSysStatemService;
 import bros.manage.business.service.ILogTAllExceptionService;
 import bros.manage.business.service.ILogTellogService;
 import bros.manage.business.service.ITelReceiveQueueService;
+import bros.manage.business.service.ITelSendQueueBakService;
+import bros.manage.business.service.ITelSendQueueService;
 import bros.manage.business.service.ITelSysStatusService;
 import bros.manage.business.view.LocalBoard;
 import bros.manage.dynamic.datasource.DynamicDataSource;
@@ -83,11 +85,13 @@ public class DataBaseUtil {
 				propertiesMap = PropertiesUtil.getDBPropertiesInfo();
 				String teleRestorFilePath = (String) propertiesMap.get("teleRestorFilePath");
 				String ip = (String) propertiesMap.get("ip");
-				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
-				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
+				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT_EN);
+				String dateTemp = DateUtil.getServerTime(DateUtil.DEFAULT_TIME_FORMAT_EN);
+				writeFileByLine(teleRestorFilePath+date+".txt",dateTemp+"时间开始接收异常:"+teletext);
+				
 				MainWindow.mainBoard.addMsg("写库数据库状态异常:"+ip, LocalBoard.INFO_ERROR);
 				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
-				logger.error("写库库状态异常:"+ip);
+				logger.error("写库库状态异常:"+ip,da);
 				// 存入电报接收队列时记录电报处理日志
 				saveReceiveQueueDealLog("电报接收", "新建", sql ,"失败",da.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
 			} catch (ConfigurationException e1) {
@@ -150,9 +154,10 @@ public class DataBaseUtil {
 	// 检测数据库状态
 	public static boolean checkDBState(String dataSourceName) throws Exception{
 		boolean flag = true;
+		DruidPooledConnection conn = null;
 		try {
 			DruidDataSource ds = (DruidDataSource) DynamicDataSource.getInstance().getDataSourceMap().get("default");
-			DruidPooledConnection conn = ds.getConnection(6000);
+			conn = ds.getConnection(6000);
 			if(conn.isClosed()){
 				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
 				flag=false;
@@ -174,32 +179,11 @@ public class DataBaseUtil {
 			flag=false;
 			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_ERROR);
 			logger.error("检查数据库状态失败", t);
+		}finally{
+			if(conn!=null){
+				conn.close();
+			}
 		}
-//		boolean flag = true;
-//		DruidDataSource defaultDataSource = (DruidDataSource) new DynamicDataSource().getInstance().getDataSourceMap().get(dataSourceName);
-//		try {
-//			DruidPooledConnection dpc  = defaultDataSource.getConnection(2000);
-//			Connection connection  = dpc.getConnection();
-//			
-//			if(null == connection || connection.isClosed()){ // 关闭状态
-//				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
-//				flag = false;
-//			}else{ // 非关闭状态
-//				MainWindow.databaseStatus.setBackground(new java.awt.Color(0, 255, 0));
-//				MainWindow.databaseStatus.repaint();
-//				flag = true;
-//			}
-//		} catch(GetConnectionTimeoutException gte){
-//			flag=false;
-//			MainWindow.mainBoard.addMsg("数据库连接超时,请检查数据库配置!", LocalBoard.INFO_SYSTEM);
-//			//defaultDataSource.close();
-//			logger.error("数据库连接超时,请检查数据库配置",gte);
-//		}catch (SQLException e) {
-//			flag=false;
-//			MainWindow.mainBoard.addMsg("检查数据库状态失败!", LocalBoard.INFO_SYSTEM);
-//			logger.error("检查数据库状态失败", e);
-//			
-//		}
 		
 		return flag;
 	}
@@ -362,7 +346,7 @@ public class DataBaseUtil {
 			telSysStatusMap.put("sysDatabase", (String) propertiesMap.get("ip"));
 			
 			// 查询当前运行系统运行状态表记录
-			int count = telSysStatusService.queryTelSysStatus();
+			int count = telSysStatusService.queryTelSysStatus(telSysStatusMap);
 			if(count > 0){
 				// 更新
 				telSysStatusService.updateTelSysStatus(telSysStatusMap);
@@ -383,5 +367,63 @@ public class DataBaseUtil {
 	public static void saveLogTAllException(Map<String,Object> contextMap) throws ServiceException{
 		ILogTAllExceptionService logTAllExceptionService = (ILogTAllExceptionService) SpringUtil.getBean("logTAllExceptionService");
 		logTAllExceptionService.addLogTAllException(contextMap);
+	}
+	
+	/**
+	 * 新增发送电报备份
+	 * @param contextMap
+	 * @throws ServiceException
+	 */
+	public static void saveSendQueueBak(Map<String,Object> contextMap) throws ServiceException{
+		ITelSendQueueBakService telSendQueueBakService = (ITelSendQueueBakService) SpringUtil.getBean("telSendQueueBakService");
+		ITelSendQueueService telSendQueueService = (ITelSendQueueService) SpringUtil.getBean("telSendQueueService");
+		// 获取执行SQL
+		String sqlIdBak = "bros.manage.business.mapper.TelSendQueueBakMapper.insertTelSendInfoBak";
+		String sqlIdAll = "bros.manage.business.mapper.TelSendQueueBakMapper.insertTelTAllSend";
+		String sqlDelete = "bros.manage.business.mapper.TelSendQueueMapper.deleteTelSendInfo";
+		
+		// 获取执行sql
+		String sqlBak ="";
+		String sqlAll ="";
+		String sqlDeleteTel ="";
+		// 主键
+		String tel_id = (String) contextMap.get("tel_id");
+		try{
+			int a = telSendQueueBakService.addTelSendInfoBak(contextMap);
+			logger.debug("记录TEL_T_SEND_QUEUE_BAK表:"+tel_id+"[成功条数："+a+"]");
+			// 获取执行sql
+			sqlBak = DataBaseUtil.getSql(sqlIdBak,contextMap);
+			// 电报发送成功,记录电报处理日志
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_SEND_QUEUE_BAK", "新建", sqlBak ,"成功","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+		}catch(Exception e){
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_SEND_QUEUE_BAK", "新建", sqlBak ,"失败","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+			logger.error("电报发送备份TEL_T_SEND_QUEUE_BAK失败", e);
+		}
+		
+		try{
+			int a = telSendQueueBakService.addTelTAllSend(contextMap);
+			logger.debug("记录TEL_T_ALLSEND表:"+tel_id+"[成功条数："+a+"]");
+			// 获取执行sql
+			sqlAll = DataBaseUtil.getSql(sqlIdAll,contextMap);
+			// 电报发送成功,记录电报处理日志
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_ALLSEND", "新建", sqlAll ,"成功","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+		}catch(Exception e){
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_ALLSEND", "新建", sqlAll ,"失败","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+			logger.error("电报发送备份TEL_T_ALLSEND失败", e);
+		}
+		
+		
+
+		try{
+			int a = telSendQueueService.deleteTelSendInfo(contextMap);
+			logger.debug("删除TEL_T_SEND_QUEUE表记录:"+tel_id+"[成功条数："+a+"]");
+			// 获取执行sql
+			sqlDeleteTel = DataBaseUtil.getSql(sqlDelete,contextMap);
+			// 电报发送成功,记录电报处理日志
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送", "删除", sqlDeleteTel ,"成功","无", tel_id, "4" ,"删除发送队列","删除发送队列");
+		}catch(Exception e){
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送", "删除", sqlDeleteTel ,"失败","无", tel_id, "4" ,"删除发送队列","删除发送队列");
+			logger.error("电报发送记录操作日志失败", e);
+		}
 	}
 }

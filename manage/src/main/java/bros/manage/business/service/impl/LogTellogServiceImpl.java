@@ -40,9 +40,9 @@ public class LogTellogServiceImpl implements ILogTellogService{
 	public void addLogTellogInfo(Map<String,Object> contextMap) throws ServiceException {
 		try{
 			
-			String id = "bros.manage.business.mapper.LogTellogMapper.insertLogTellogInfo";
-	        MyBatisSql sql = MyBatisSqlUtils.getMyBatisSql(id, contextMap, sqlSessionFactory); 
-	        contextMap.put("logSQL", sql.toString());
+//			String id = "bros.manage.business.mapper.LogTellogMapper.insertLogTellogInfo";
+//	        MyBatisSql sql = MyBatisSqlUtils.getMyBatisSql(id, contextMap, sqlSessionFactory); 
+//	        contextMap.put("logSQL", sql.toString());
 	        logTellogMapper.insertLogTellogInfo(contextMap);
 
 		}catch (Exception e) {

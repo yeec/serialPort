@@ -10,6 +10,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -138,6 +140,53 @@ public class MainWindow extends JFrame {
 			setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 			// 禁止窗口最大化
 			setResizable(false);
+			
+			this.addWindowListener(new WindowListener() {
+				
+				@Override
+				public void windowOpened(WindowEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void windowIconified(WindowEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void windowDeiconified(WindowEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void windowDeactivated(WindowEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+				@Override
+				public void windowClosing(WindowEvent e) {
+					int a = JOptionPane.showConfirmDialog(null, "确定关闭程序吗？", "温馨提示", JOptionPane.WARNING_MESSAGE);
+					if(a==0){
+						exitMenuItemActionPerformed();
+					}
+				}
+				
+				@Override
+				public void windowClosed(WindowEvent e) {
+
+				}
+				
+				@Override
+				public void windowActivated(WindowEvent e) {
+					// TODO Auto-generated method stub
+					
+				}
+			});
+			setVisible(true);
 
 			// 设置程序窗口居中显示
 			int DIALOG_WHITE = 900;//宽度
@@ -376,8 +425,35 @@ public class MainWindow extends JFrame {
 			DefaultCaret sendBoardCaret = (DefaultCaret)sendBoard.getCaret();
 			sendBoardCaret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 			
+			if(null == ContextTemp.serialParameters){
+				//如果更改数据库配置
+				ContextTemp.serialParameters= new SerialParameters();
+				Map<String, Object> dbMap = PropertiesUtil.getDBPropertiesDiskInfo();
+				String portName = (String) dbMap.get("portName");// 端口
+				String baudRate = (String) dbMap.get("baudRate");// 波特率
+				String databits= (String) dbMap.get("databits");// 数据位
+				String stopbits= (String) dbMap.get("stopbits");// 奇偶校验
+				String parity= (String) dbMap.get("parity");// 停止位
+				String flowControlIn= (String) dbMap.get("flowControlIn");// 输入流控制
+				String flowControlOut= (String) dbMap.get("flowControlOut");// 输出流控制
+				
+				// 串口参数设置
+				ContextTemp.serialParameters.setPortName(portName);// 端口
+				ContextTemp.serialParameters.setBaudRate(baudRate);// 波特率
+				ContextTemp.serialParameters.setDatabits(databits);// 数据位
+				ContextTemp.serialParameters.setStopbits(stopbits);// 奇偶校验
+				ContextTemp.serialParameters.setParity(parity);// 停止位
+				ContextTemp.serialParameters.setFlowControlIn(flowControlIn);// 输入流控制
+				ContextTemp.serialParameters.setFlowControlOut(flowControlOut);// 输出流控制
+				
+			}
+			if(null==sp){
+				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
+			}
+			thread = new SerialSendThread(sp);
+			thread.start();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("应用初始化失败", e);
 		}
 	}
 	
@@ -407,15 +483,6 @@ public class MainWindow extends JFrame {
 	}
 
 	/**
-	 * 参数设置
-	 * 
-	 * @param evt
-	 */
-	private void jButtonConfigMouseClicked(MouseEvent evt) {
-		ContextTemp.serialParameters = new JDialogOptions(this).getSerialParameters();
-	}
-
-	/**
 	 * 停止运行，退出程序
 	 * 
 	 * @param evt
@@ -432,50 +499,31 @@ public class MainWindow extends JFrame {
 			System.exit(0);
 		}
 	}
-
 	/**
-	 * 开始接收数据
+	 * 停止运行，退出程序
 	 * 
 	 * @param evt
-	 */	private void jButtonStartMouseClicked(MouseEvent evt) {
-
-		startTelegram();
-//		jButtonStart.setEnabled(false);
-//		jButtonStop.setEnabled(true);
-//		jButtonConfig.setEnabled(false);
-//		configMenuItem.setEnabled(false);
-//		startMenuItem.setEnabled(false);
-//		stopMenuItem.setEnabled(true);
-	}
-
-	private void startActionPerformed(ActionEvent evt) {
-		
-		startTelegram();
-//		jButtonStart.setEnabled(false);
-//		jButtonStop.setEnabled(true);
-//		jButtonConfig.setEnabled(false);
-//		configMenuItem.setEnabled(false);
-//		startMenuItem.setEnabled(false);
-//		stopMenuItem.setEnabled(true);
-		
-//		CvsDataUtil.read();
-	}
-	
-	/**
-	 * 停止数据接收和发送
-	 * @param evt
 	 */
-	private void jButtonStopMouseClicked(MouseEvent evt) {
-		stopTelegram();
-		jButtonStart.setEnabled(true);
-		jButtonStop.setEnabled(false);
-		jButtonConfig.setEnabled(true);
-		configMenuItem.setEnabled(true);
-		startMenuItem.setEnabled(true);
-		stopMenuItem.setEnabled(false);
+	private void exitMenuItemActionPerformed() {
+		this.dispose();
+		try{
+			stopTelegram();
+			// 记录系统运行状态
+			DataBaseUtil.saveSysStatusInfo("退出");
+		}catch(Exception e){
+			logger.error("系统退出异常",e);
+		}finally{
+			System.exit(0);
+		}
+	}
+	// 开始收发报事件
+	private void startActionPerformed(ActionEvent evt) {
+		startTelegram();
 	}
 	
+	// 停止收发报事件
 	private void stopActionPerformed(ActionEvent evt) {
+		ContextTemp.configSetFlag=true;
 		stopTelegram();
 		jButtonStart.setEnabled(true);
 		jButtonStop.setEnabled(false);
@@ -508,9 +556,9 @@ public class MainWindow extends JFrame {
 			stopSendThread();
 			
 			// 删除监听器
-			SerialPortManager.removeListener(sp);
+//			SerialPortManager.removeListener(sp);
 			// 关闭监听端口
-			sp = SerialPortManager.closePort(sp);
+//			sp = SerialPortManager.closePort(sp);
 			
 			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
 			
@@ -579,10 +627,12 @@ public class MainWindow extends JFrame {
 			} else {
 				jButtonStart.setEnabled(false);
 				jButtonStop.setEnabled(true);
-				jButtonConfig.setEnabled(false);
-				configMenuItem.setEnabled(false);
+				jButtonConfig.setEnabled(true);
+				ContextTemp.configSetFlag = false;
+				//configMenuItem.setEnabled(ContextTemp.configSetFlag);
 				startMenuItem.setEnabled(false);
 				stopMenuItem.setEnabled(true);
+				
 				MainWindow.mainBoard.addMsg("系统已就绪.", LocalBoard.INFO_SYSTEM);
 				
 				// 日志描述
@@ -595,6 +645,7 @@ public class MainWindow extends JFrame {
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
 				// 记录系统运行状态
 				DataBaseUtil.saveSysStatusInfo("运行");
+				
 			}
 		} catch (ServiceException e) {
 			JOptionPane.showMessageDialog(this, e.getErrorMsg());
@@ -606,12 +657,19 @@ public class MainWindow extends JFrame {
 		}
 	}
 	
-	private void startSendThread(){
+	private void startSendThread() throws SerialPortParameterFailure, NotASerialPort, NoSuchPort, PortInUse{
 		//启动ping线程
 		PingThread pt = PingThread.getInstance();
 		pt.startT();
-		thread = new SerialSendThread(sp);
-		thread.start();
+		if(null==sp){
+			sp = SerialPortManager.openPort(ContextTemp.serialParameters);
+		}
+		if(thread==null){
+			thread = new SerialSendThread(sp);
+			thread.start();
+		}
+		thread.updateSp(sp);
+		thread.startSafely();
 		MainWindow.mainBoard.addMsg("发送电报线程启动.", LocalBoard.INFO_SYSTEM);
 	}
 	
@@ -620,13 +678,20 @@ public class MainWindow extends JFrame {
 		pt.stopT();
 		if(null!=thread){
 			thread.stopSafely();
-			thread.stop();
 			MainWindow.mainBoard.addMsg("发送电报线程停止.", LocalBoard.INFO_SYSTEM);
 		}
 	}
 
 	private boolean initSP() {
 		try {
+			try{
+				// 删除监听器
+				SerialPortManager.removeListener(sp);
+				// 关闭监听端口
+				sp = SerialPortManager.closePort(sp);
+			}catch(Exception e){
+				
+			}
 			if(null == ContextTemp.serialParameters){
 				//如果更改数据库配置
 				ContextTemp.serialParameters= new SerialParameters();
@@ -653,6 +718,7 @@ public class MainWindow extends JFrame {
 				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
 			}
 			//InputStream inputStream = sp.getInputStream();
+			
 			sl = new SerialListener(sp);
 			SerialPortManager.addListener(sp, sl);
 			sl.setName("报文处理线程");

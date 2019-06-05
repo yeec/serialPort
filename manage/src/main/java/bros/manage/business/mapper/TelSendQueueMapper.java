@@ -18,5 +18,6 @@ public interface TelSendQueueMapper {
 	public void updateTelSendInfo(Map <String,Object> contextMap);
 	// 新增发送电报
 	public void insertTelSendInfo(Map<String, Object> contextMap)throws DataAccessException;
-	
+	// 删除电报
+	public int deleteTelSendInfo(Map<String, Object> contextMap);
 }

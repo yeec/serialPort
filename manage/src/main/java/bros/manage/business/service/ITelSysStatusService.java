@@ -14,5 +14,5 @@ public interface ITelSysStatusService {
 	// 更新当前系统的状态表
 	public int updateTelSysStatus(Map<String, Object> contextMap) throws ServiceException;;
 	// 查询当前系统的状态表
-    public int queryTelSysStatus() throws ServiceException;;
+    public int queryTelSysStatus(Map<String, Object> contextMap) throws ServiceException;;
 }
