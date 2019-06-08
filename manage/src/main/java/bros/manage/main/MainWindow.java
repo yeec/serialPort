@@ -14,6 +14,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
@@ -448,6 +449,10 @@ public class MainWindow extends JFrame {
 				
 			}
 			if(null==sp){
+				List<String>  commList = SerialPortManager.findPort();
+				if(commList.size() > 0){
+					ContextTemp.SerialPortList = commList;
+				}
 				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
 			}
 			thread = new SerialSendThread(sp);
@@ -539,6 +544,7 @@ public class MainWindow extends JFrame {
 		if(sl!=null){
 			//停止报文处理线程
 			sl.stopHandle();
+			
 		}
 		// 组装正常记录日志入参（电报收发系统接收发送状态改变日志）
 		Map<String, Object> stopTelegramMap = new HashMap<String, Object>();
@@ -556,9 +562,9 @@ public class MainWindow extends JFrame {
 			stopSendThread();
 			
 			// 删除监听器
-//			SerialPortManager.removeListener(sp);
+			SerialPortManager.removeListener(sp);
 			// 关闭监听端口
-//			sp = SerialPortManager.closePort(sp);
+			sp = SerialPortManager.closePort(sp);
 			
 			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
 			
@@ -730,11 +736,11 @@ public class MainWindow extends JFrame {
 			logger.error("设置串口参数失败", e);
 			return false;
 		} catch (NotASerialPort e) {
-			MainWindow.mainBoard.addMsg("不是一个有效串口", LocalBoard.INFO_ERROR);
+			MainWindow.mainBoard.addMsg("不是一个有效串口"+ContextTemp.serialParameters.getPortName(), LocalBoard.INFO_ERROR);
 			logger.error("不是一个有效串口", e);
 			return false;
 		} catch (NoSuchPort e) {
-			MainWindow.mainBoard.addMsg("无此串口", LocalBoard.INFO_ERROR);
+			MainWindow.mainBoard.addMsg("无此串口"+ContextTemp.serialParameters.getPortName(), LocalBoard.INFO_ERROR);
 			logger.error("无此串口", e);
 			return false;
 		} catch (PortInUse e) {

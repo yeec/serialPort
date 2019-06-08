@@ -44,16 +44,34 @@ public class SerialPortManager {
 	 * 
 	 * @return 可用端口名称列表
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "restriction" })
 	public static final ArrayList<String> findPort() {
-		// 获得当前所有可用串口
-		Enumeration<CommPortIdentifier> portList = CommPortIdentifier.getPortIdentifiers();
 		ArrayList<String> portNameList = new ArrayList<String>();
-		// 将可用串口名添加到List并返回该List
-		while (portList.hasMoreElements()) {
-			String portName = portList.nextElement().getName();
-			portNameList.add(portName);
+		
+		if(ContextTemp.SerialPortList != null && ContextTemp.SerialPortList.size() > 0){
+			portNameList =  (ArrayList<String>) ContextTemp.SerialPortList;
+		}else{
+			CommPortIdentifier portId;
+			// 将可用串口名添加到List并返回该List
+		    Enumeration	en = CommPortIdentifier.getPortIdentifiers();
+		    // iterate through the ports.
+		    while (en.hasMoreElements()) {
+		    	portId = (CommPortIdentifier) en.nextElement();
+				if (portId.getPortType() == CommPortIdentifier.PORT_SERIAL) {
+					portNameList.add(portId.getName());
+				} 
+		    } 
 		}
+		
+		
+		// 获得当前所有可用串口
+//		Enumeration<CommPortIdentifier> portList = CommPortIdentifier.getPortIdentifiers();
+//		ArrayList<String> portNameList = new ArrayList<String>();
+//		// 将可用串口名添加到List并返回该List
+//		while (portList.hasMoreElements()) {
+//			String portName = portList.nextElement().getName();
+//			portNameList.add(portName);
+//		}
 		return portNameList;
 	}
 

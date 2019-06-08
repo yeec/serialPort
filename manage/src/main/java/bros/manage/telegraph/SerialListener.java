@@ -41,7 +41,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	private BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>();
 
 	// 报文处理线程停止位
-	private boolean stop = false;
+	private volatile boolean stop = false;
 	private int count1 = 0;
 	
 	private AtomicInteger receiveNum = new AtomicInteger(0);
@@ -65,6 +65,10 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	// 停止线程
 	public void stopHandle() {
 		stop = true;
+	}
+	// 开始线程
+	public void startHandle() {
+		stop = false;
 	}
 
 	/**
@@ -151,24 +155,26 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 		ProcessThread.init(taskId, poolSize, queueSize, limit);
 		try {
 			logger.info("--------------任务处理线程运行了--------------");
-			while (!stop) {
-				try {
-					// 如果堵塞队列中存在数据就将其输出
-					if (msgQueue.size() > 0) {
-						String sb = msgQueue.take();
-						int num = count.incrementAndGet();
-						logger.debug("第"+num+"次处理电报："+sb);
-						
-						Map<String,Object> data = new HashMap<String, Object>();
-						data.put("message", sb);
-						data.put("num", num+"");
-						IndertDataHandler indertDataHandler = new IndertDataHandler();
-						ProcessEntity entity = new ProcessEntity(data,indertDataHandler);
-						Queue.getInstance().getQueue(taskId, 1).put(entity);
+			while(true){
+				while (!stop) {
+					try {
+						// 如果堵塞队列中存在数据就将其输出
+						if (msgQueue.size() > 0) {
+							String sb = msgQueue.take();
+							int num = count.incrementAndGet();
+							logger.debug("第"+num+"次处理电报："+sb);
+							
+							Map<String,Object> data = new HashMap<String, Object>();
+							data.put("message", sb);
+							data.put("num", num+"");
+							IndertDataHandler indertDataHandler = new IndertDataHandler();
+							ProcessEntity entity = new ProcessEntity(data,indertDataHandler);
+							Queue.getInstance().getQueue(taskId, 1).put(entity);
+						}
+					} catch (Exception e) {
+						logger.error("处理接收电报数据线程异常", e);
+						continue;
 					}
-				} catch (Exception e) {
-					logger.error("处理接收电报数据线程异常", e);
-					continue;
 				}
 			}
 		} catch (Exception e) {

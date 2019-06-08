@@ -1,5 +1,8 @@
 package bros.manage.main;
 
+
+import java.util.List;
+
 import bros.manage.entity.SerialParameters;
 
 public class ContextTemp {
@@ -13,4 +16,6 @@ public class ContextTemp {
 	 * 点击开始收发报，参数设置弹框中的内容不可改标志（true:可改；false:不可改）
 	 */
 	public static boolean configSetFlag=true;
+	
+	public static List<String>  SerialPortList = null;
 }
