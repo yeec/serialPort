@@ -63,7 +63,7 @@
 	<!-- 查询电报发送列表 -->
     <select id='getTelSendInfo' resultMap='telSendQueueMap'  >
     	<![CDATA[
-			SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by SEND_DATE,TURNID
+			SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by INSERT_TIME,TURNID
 		]]>
     </select>
     

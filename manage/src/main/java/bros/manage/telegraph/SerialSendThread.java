@@ -120,9 +120,9 @@ public class SerialSendThread extends Thread {
 								// 执行更新操作
 								itelSendQueueService.updateTelSendInfo(contextMap);
 								// 更新发送电报标志位：记录电报处理日志
-								DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "更新", sql ,"成功","无", tel_id, "4" ,"更新电报标志位(SEND_FLAG)为已发送","发送电报");
-								// 电报发送成功,记录电报处理日志
-								DataBaseUtil.saveReceiveQueueDealLog("电报发送", "新建", "" ,"成功","无", tel_id, "4" ,"发送电报","发送电报");
+								DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "修改", sql ,"成功","无", tel_id, "4" ,"更新电报标志位(SEND_FLAG)为已发送","发送电报");
+								// 电报发送成功,记录电报处理日志（针对发送动作完成）
+								DataBaseUtil.saveReceiveQueueDealLog("电报发送", "新增", "" ,"成功","无", tel_id, "4" ,"发送电报","发送电报");
 								// 发送电报备份与删除队列操作
 								DataBaseUtil.saveSendQueueBak(queryTeleInfoList.get(i));
 							}
@@ -138,7 +138,7 @@ public class SerialSendThread extends Thread {
 						// 电报发送模块异常捕捉：记录系统运行日志
 						DataBaseUtil.saveSendExceptionLog("运行","异常",e.getMessage().toString(), "3");
 						// 更新发送电报标志位：记录电报处理日志
-						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
+						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "修改", sql ,"失败",e.getMessage().toString(), tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 						MainWindow.mainBoard.addMsg("串口写数据失败[SendDataToSerialPortFailure]", LocalBoard.INFO_ERROR);
 						logger.error("串口写数据失败",e);
 						continue;
@@ -150,7 +150,7 @@ public class SerialSendThread extends Thread {
 						// 电报发送模块异常捕捉：记录系统运行日志
 						DataBaseUtil.saveSendExceptionLog("运行","异常","串口写数据失败[SerialPortOutputStreamCloseFailure]", "3");
 						// 更新发送电报标志位：记录电报处理日志
-						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败","串口写数据失败[SerialPortOutputStreamCloseFailure]", tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
+						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "修改", sql ,"失败","串口写数据失败[SerialPortOutputStreamCloseFailure]", tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 						MainWindow.mainBoard.addMsg("串口写数据失败[SerialPortOutputStreamCloseFailure]", LocalBoard.INFO_ERROR);
 						logger.error("串口写数据失败",e);
 						continue;
@@ -162,7 +162,7 @@ public class SerialSendThread extends Thread {
 						// 电报发送模块异常捕捉：记录系统运行日志
 						DataBaseUtil.saveSendExceptionLog("运行","异常","发送电报失败[UnsupportedEncodingException]", "3");
 						// 更新发送电报标志位：记录电报处理日志
-						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败","发送电报失败[UnsupportedEncodingException]", tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
+						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "修改", sql ,"失败","发送电报失败[UnsupportedEncodingException]", tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 						MainWindow.mainBoard.addMsg("发送电报失败[UnsupportedEncodingException]", LocalBoard.INFO_ERROR);
 						logger.error("发送电报失败",e);
 						continue;
@@ -174,7 +174,7 @@ public class SerialSendThread extends Thread {
 						// 电报发送模块异常捕捉：记录系统运行日志
 						DataBaseUtil.saveSendExceptionLog("运行","异常","发送电报失败[InterruptedException]", "3");
 						// 更新发送电报标志位：记录电报处理日志
-						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败","发送电报失败[InterruptedException]", tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
+						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "修改", sql ,"失败","发送电报失败[InterruptedException]", tel_id, "4" ,"对已经发送的电报标志位更新为已发送","发送电报");
 						MainWindow.mainBoard.addMsg("发送电报失败[InterruptedException]", LocalBoard.INFO_ERROR);
 						logger.error("发送电报失败",e);
 						continue;
@@ -186,7 +186,7 @@ public class SerialSendThread extends Thread {
 						// 电报发送模块异常捕捉：记录系统运行日志
 						DataBaseUtil.saveSendExceptionLog("运行","异常","发送电报失败[Throwable]", "3");
 						// 更新发送电报标志位：记录电报处理日志
-						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "发送", sql ,"失败","发送电报失败[Throwable]", tel_id, "4" ,"标志位更新为已发送","发送电报");
+						DataBaseUtil.saveReceiveQueueDealLog("电报发送（更新标志位）", "修改", sql ,"失败","发送电报失败[Throwable]", tel_id, "4" ,"标志位更新为已发送","发送电报");
 						MainWindow.mainBoard.addMsg("发送电报失败[Throwable]", LocalBoard.INFO_ERROR);
 						logger.error("发送电报失败",t);
 						continue;

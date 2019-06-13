@@ -77,7 +77,7 @@ public class DataBaseUtil {
 		try {
 			itelReceiveQueueService.addTelReceiveQueueInfo(contextMap);
 			// 存入电报接收队列时记录电报处理日志
-			saveReceiveQueueDealLog("电报接收", "新建", sql ,"成功","无", mainKey, "1" ,"电报接收","接收结果");
+			saveReceiveQueueDealLog("电报接收", "新增", sql ,"成功","无", mainKey, "1" ,"电报接收","接收结果");
 		}catch(DataAccessException da){
 			Map<String, Object> propertiesMap;
 			try {
@@ -93,7 +93,7 @@ public class DataBaseUtil {
 				MainWindow.databaseStatus.setBackground(new java.awt.Color(255, 0, 0));
 				logger.error("写库库状态异常:"+ip,da);
 				// 存入电报接收队列时记录电报处理日志
-				saveReceiveQueueDealLog("电报接收", "新建", sql ,"失败",da.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
+				saveReceiveQueueDealLog("电报接收", "新增", sql ,"失败",da.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
 			} catch (ConfigurationException e1) {
 				logger.error("配置文件读取失败",e1);
 			}catch(Exception e2){
@@ -109,7 +109,7 @@ public class DataBaseUtil {
 				String date = DateUtil.getServerTime(DateUtil.DEFAULT_DATE_FORMAT);
 				writeFileByLine(teleRestorFilePath+date+".txt",date+"时间开始接收异常:"+teletext);
 				// 存入电报接收队列时记录电报处理日志
-				saveReceiveQueueDealLog("电报接收", "新建", sql ,"失败",e.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
+				saveReceiveQueueDealLog("电报接收", "新增", sql ,"失败",e.getMessage().toString(), mainKey, "1" ,"电报接收","接收结果");
 			} catch (ConfigurationException e1) {
 				logger.error("配置文件读取失败",e1);
 			}catch(Exception e2){
@@ -394,9 +394,9 @@ public class DataBaseUtil {
 			// 获取执行sql
 			sqlBak = DataBaseUtil.getSql(sqlIdBak,contextMap);
 			// 电报发送成功,记录电报处理日志
-			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_SEND_QUEUE_BAK", "新建", sqlBak ,"成功","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_SEND_QUEUE_BAK", "新增", sqlBak ,"成功","无", tel_id, "4" ,"发送电报备份","发送电报备份");
 		}catch(Exception e){
-			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_SEND_QUEUE_BAK", "新建", sqlBak ,"失败","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_SEND_QUEUE_BAK", "新增", sqlBak ,"失败","无", tel_id, "4" ,"发送电报备份","发送电报备份");
 			logger.error("电报发送备份TEL_T_SEND_QUEUE_BAK失败", e);
 		}
 		
@@ -406,9 +406,9 @@ public class DataBaseUtil {
 			// 获取执行sql
 			sqlAll = DataBaseUtil.getSql(sqlIdAll,contextMap);
 			// 电报发送成功,记录电报处理日志
-			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_ALLSEND", "新建", sqlAll ,"成功","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_ALLSEND", "新增", sqlAll ,"成功","无", tel_id, "4" ,"发送电报备份","发送电报备份");
 		}catch(Exception e){
-			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_ALLSEND", "新建", sqlAll ,"失败","无", tel_id, "4" ,"发送电报备份","发送电报备份");
+			DataBaseUtil.saveReceiveQueueDealLog("电报发送备份TEL_T_ALLSEND", "新增", sqlAll ,"失败","无", tel_id, "4" ,"发送电报备份","发送电报备份");
 			logger.error("电报发送备份TEL_T_ALLSEND失败", e);
 		}
 		
