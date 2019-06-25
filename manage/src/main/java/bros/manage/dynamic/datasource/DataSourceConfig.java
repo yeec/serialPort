@@ -62,7 +62,8 @@ public class DataSourceConfig {
         DruidDataSource defaultDataSource = new DruidDataSource();
 //        defaultDataSource.setUrl("jdbc:oracle:thin:@"+defaultDBIp+":"+defaultDBPort+":"+defaultDBSvrName);
 //        defaultDataSource.setUrl("jdbc:oracle:thin:@//"+defaultDBIp+":"+defaultDBPort+"/"+defaultDBSvrName);
-        String databaseUrl = "jdbc:oracle:thin:@(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = "+defaultDBIp+")(PORT = "+defaultDBPort+"))(LOAD_BALANCE=YES)(CONNECT_DATA=(SERVICE_NAME="+defaultDBSvrName+")(FAILOVER_MODE=(TYPE=select)(METHOD=PRECONNECT)(RETRIES=60)(DELAY=5))))";
+//        String databaseUrl = "jdbc:oracle:thin:@(DESCRIPTION =(ADDRESS = (PROTOCOL = TCP)(HOST = "+defaultDBIp+")(PORT = "+defaultDBPort+"))(LOAD_BALANCE=YES)(CONNECT_DATA=(SERVICE_NAME="+defaultDBSvrName+")(FAILOVER_MODE=(TYPE=select)(METHOD=PRECONNECT)(RETRIES=60)(DELAY=5))))";
+        String databaseUrl = "jdbc:oracle:thin:@(description=(address=(protocol=tcp)(port="+defaultDBPort+")(host="+defaultDBIp+"))(connect_data=(service_name="+defaultDBSvrName+")))";
         defaultDataSource.setUrl(databaseUrl);
         defaultDataSource.setUsername(defaultDBUser);
         defaultDataSource.setPassword(defaultDBPassword);
