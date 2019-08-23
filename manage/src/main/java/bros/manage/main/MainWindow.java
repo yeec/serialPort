@@ -1,7 +1,5 @@
 package bros.manage.main;
 
-import gnu.io.SerialPort;
-
 import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.Image;
@@ -9,7 +7,6 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -28,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.text.DefaultCaret;
 
@@ -60,6 +58,7 @@ import bros.manage.util.SpringUtil;
 //@SpringBootApplication
 public class MainWindow extends JFrame {
 	
+	private static final long serialVersionUID = -3095296176137452118L;
 	private static String[] args;
     private static ConfigurableApplicationContext context;
 //    private static MainWindow window;
@@ -105,7 +104,7 @@ public class MainWindow extends JFrame {
 	private JLabel jLabel5;
 	private JLabel jLabel3;
 	// 串口对象
-	private SerialPort sp;
+//	private SerialPort sp;
 	// 串口参数对象
 //	private SerialParameters serialParameters;
 	//发送电报线程
@@ -448,14 +447,14 @@ public class MainWindow extends JFrame {
 				ContextTemp.serialParameters.setFlowControlOut(flowControlOut);// 输出流控制
 				
 			}
-			if(null==sp){
+			if(null==ContextTemp.sp){
 				List<String>  commList = SerialPortManager.findPort();
 				if(commList.size() > 0){
 					ContextTemp.SerialPortList = commList;
 				}
-				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
+				ContextTemp.sp = SerialPortManager.openPort(ContextTemp.serialParameters);
 			}
-			thread = new SerialSendThread(sp);
+			thread = new SerialSendThread(ContextTemp.sp);
 			thread.start();
 		} catch (Exception e) {
 			logger.error("应用初始化失败", e);
@@ -523,6 +522,7 @@ public class MainWindow extends JFrame {
 	}
 	// 开始收发报事件
 	private void startActionPerformed(ActionEvent evt) {
+		MainWindow.mainBoard.clearaddMsg();
 		startTelegram();
 	}
 	
@@ -562,9 +562,9 @@ public class MainWindow extends JFrame {
 			stopSendThread();
 			
 			// 删除监听器
-			SerialPortManager.removeListener(sp);
+			SerialPortManager.removeListener(ContextTemp.sp);
 			// 关闭监听端口
-			sp = SerialPortManager.closePort(sp);
+			ContextTemp.sp = SerialPortManager.closePort(ContextTemp.sp);
 			
 			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
 			
@@ -667,14 +667,14 @@ public class MainWindow extends JFrame {
 		//启动ping线程
 		PingThread pt = PingThread.getInstance();
 		pt.startT();
-		if(null==sp){
-			sp = SerialPortManager.openPort(ContextTemp.serialParameters);
+		if(null==ContextTemp.sp){
+			ContextTemp.sp = SerialPortManager.openPort(ContextTemp.serialParameters);
 		}
 		if(thread==null){
-			thread = new SerialSendThread(sp);
+			thread = new SerialSendThread(ContextTemp.sp);
 			thread.start();
 		}
-		thread.updateSp(sp);
+		thread.updateSp(ContextTemp.sp);
 		thread.startSafely();
 		MainWindow.mainBoard.addMsg("发送电报线程启动.", LocalBoard.INFO_SYSTEM);
 	}
@@ -692,9 +692,9 @@ public class MainWindow extends JFrame {
 		try {
 			try{
 				// 删除监听器
-				SerialPortManager.removeListener(sp);
+				SerialPortManager.removeListener(ContextTemp.sp);
 				// 关闭监听端口
-				sp = SerialPortManager.closePort(sp);
+				ContextTemp.sp = SerialPortManager.closePort(ContextTemp.sp);
 			}catch(Exception e){
 				
 			}
@@ -720,15 +720,19 @@ public class MainWindow extends JFrame {
 				ContextTemp.serialParameters.setFlowControlOut(flowControlOut);// 输出流控制
 				
 			}
-			if(null==sp){
-				sp = SerialPortManager.openPort(ContextTemp.serialParameters);
+			if(null==ContextTemp.sp){
+				ContextTemp.sp = SerialPortManager.openPort(ContextTemp.serialParameters);
 			}
 			//InputStream inputStream = sp.getInputStream();
-			
-			sl = new SerialListener(sp);
-			SerialPortManager.addListener(sp, sl);
-			sl.setName("报文处理线程");
-			sl.start();
+			if(sl==null){
+				sl = new SerialListener(ContextTemp.sp);
+				sl.setName("报文处理线程");
+				sl.start();
+			}else {
+				sl.updateSerialPort(ContextTemp.sp);
+			}
+			SerialPortManager.addListener(ContextTemp.sp, sl);
+			sl.startHandle();
 			//启动发送电报线程
 			startSendThread();
 		} catch (SerialPortParameterFailure e) {
@@ -770,8 +774,13 @@ public class MainWindow extends JFrame {
 		try{
 			MainWindow.args = args;
 			MainWindow.context = SpringApplication.run(NetUnionManageApplication.class, args);
+			
 			if(ContextTemp.window==null){
-				ContextTemp.window = new MainWindow();
+				SwingUtilities.invokeLater(new Runnable() {   
+		            public void run() {   
+		    			ContextTemp.window = new MainWindow();
+		            }   
+		        });   
 			}
 			
 			if(!DataBaseUtil.checkDBState("default")){
@@ -821,12 +830,7 @@ public class MainWindow extends JFrame {
 			
 			logSysStatemService.addLogSysStatemInfo(saveLaunchLogMap);
 		}
-//		try {
-//			System.in.read();
-//		} catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+
 	}
 	public static void restart() {
 		

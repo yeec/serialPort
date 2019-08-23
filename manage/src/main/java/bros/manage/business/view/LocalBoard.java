@@ -33,6 +33,7 @@ private String logfileName;
 	SimpleDateFormat timeFormat;
 	String tempDate;
 	File logfile;
+	JLabel jl;
 	
 //	private Vector data;
 	@SuppressWarnings("rawtypes")
@@ -61,7 +62,7 @@ private String logfileName;
         date = new Date();//chairmand add
         tempDate=timeFormat.format(date);//chairmand add
 		String msg = "";
-		JLabel jl = new JLabel();
+		jl = new JLabel();
 		switch(type){
 		case INFO_ERROR : 
 			msg ="[" + tempDate+ "]" + "[ERROR]:  " + text;
@@ -94,6 +95,12 @@ private String logfileName;
 			}
 		}
 			
+	}
+	
+	public void clearaddMsg(){
+		data.removeAllElements();
+		this.repaint();
+
 	}
 	
 	public void makeLastVisible(){

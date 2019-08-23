@@ -37,6 +37,10 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 	public SerialListener(SerialPort port) throws IOException {
 		this.port = port;
 	}
+	
+	public void updateSerialPort(SerialPort port) {
+		this.port = port;
+	}
 
 	private BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>();
 

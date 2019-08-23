@@ -4,6 +4,7 @@ package bros.manage.main;
 import java.util.List;
 
 import bros.manage.entity.SerialParameters;
+import gnu.io.SerialPort;
 
 public class ContextTemp {
 
@@ -18,4 +19,6 @@ public class ContextTemp {
 	public static boolean configSetFlag=true;
 	
 	public static List<String>  SerialPortList = null;
+	
+	public static SerialPort sp;
 }
