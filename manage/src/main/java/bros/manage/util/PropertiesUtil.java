@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -15,7 +16,8 @@ import org.apache.commons.logging.LogFactory;
 public class PropertiesUtil {
 	
 	private static final Log logger = LogFactory.getLog(PropertiesUtil.class);
-	
+	private static Map<String,Object> dbMap ;
+	private static ConcurrentHashMap<String, Object> propertiMap = new ConcurrentHashMap<String, Object>();
 	/**
 	 * 修改数据库配置文件信息
 	 * @param dbMap
@@ -67,6 +69,10 @@ public class PropertiesUtil {
 	 * @throws ConfigurationException
 	 */
 	public static Map<String,Object> getDBPropertiesInfo() throws ConfigurationException{
+		if(dbMap!=null) {
+			return dbMap;
+		}
+		dbMap = new HashMap<String,Object>();
 		PropertiesConfiguration conf = null;
 		try {
 			
@@ -81,7 +87,6 @@ public class PropertiesUtil {
 				conf = new PropertiesConfiguration(filePath);
 			}
 			
-			Map<String,Object> dbMap = new HashMap<String, Object>();
 			dbMap.put("ip", conf.getString("spring.datasource.default.ip"));
 			dbMap.put("port", conf.getString("spring.datasource.default.port"));
 			dbMap.put("svrName", conf.getString("spring.datasource.default.svrName"));
@@ -110,6 +115,10 @@ public class PropertiesUtil {
 	 * @throws ConfigurationException
 	 */
 	public static String getPropertiesByKey(String key) throws ConfigurationException{
+		String result = (String) propertiMap.get(key);
+		if(null!=result && !"".equals(result)) {
+			return result;
+		}
 		PropertiesConfiguration conf = null;
 		try {
 			
@@ -124,6 +133,7 @@ public class PropertiesUtil {
 				conf = new PropertiesConfiguration(filePath);
 			}
 			String value = conf.getString(key);
+			propertiMap.put(key, value);
 			return value;
 		} catch (ConfigurationException e) {
 			logger.error("读取数据库配置文件信息失败",e);

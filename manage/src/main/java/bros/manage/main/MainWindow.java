@@ -522,20 +522,49 @@ public class MainWindow extends JFrame {
 	}
 	// 开始收发报事件
 	private void startActionPerformed(ActionEvent evt) {
-		MainWindow.mainBoard.clearaddMsg();
-		startTelegram();
+		ContextTemp.configSetFlag = false;
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				MainWindow.mainBoard.clearaddMsg();
+				MainWindow.mainBoard.addMsg("系统启动中 ...", LocalBoard.INFO_SYSTEM);
+				jButtonStart.setEnabled(false);
+				jButtonStop.setEnabled(true);
+				jButtonConfig.setEnabled(true);
+				startMenuItem.setEnabled(false);
+				stopMenuItem.setEnabled(true);
+			}
+		});
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				startTelegram();
+			}
+		}).start();
 	}
 	
 	// 停止收发报事件
 	private void stopActionPerformed(ActionEvent evt) {
 		ContextTemp.configSetFlag=true;
-		stopTelegram();
-		jButtonStart.setEnabled(true);
-		jButtonStop.setEnabled(false);
-		jButtonConfig.setEnabled(true);
-		configMenuItem.setEnabled(true);
-		startMenuItem.setEnabled(true);
-		stopMenuItem.setEnabled(false);
+		
+		
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				jButtonStart.setEnabled(true);
+				jButtonStop.setEnabled(false);
+				jButtonConfig.setEnabled(true);
+				configMenuItem.setEnabled(true);
+				startMenuItem.setEnabled(true);
+				stopMenuItem.setEnabled(false);
+			}
+		});
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				stopTelegram();
+			}
+		}).start();
 
 	}
 	
@@ -631,13 +660,7 @@ public class MainWindow extends JFrame {
 				startTelegramMap.put("logGrade", "1");
 				logSysStatemService.addLogSysStatemInfo(startTelegramMap);
 			} else {
-				jButtonStart.setEnabled(false);
-				jButtonStop.setEnabled(true);
-				jButtonConfig.setEnabled(true);
-				ContextTemp.configSetFlag = false;
-				//configMenuItem.setEnabled(ContextTemp.configSetFlag);
-				startMenuItem.setEnabled(false);
-				stopMenuItem.setEnabled(true);
+				
 				
 				MainWindow.mainBoard.addMsg("系统已就绪.", LocalBoard.INFO_SYSTEM);
 				
