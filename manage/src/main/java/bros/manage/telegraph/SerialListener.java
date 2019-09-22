@@ -1,9 +1,5 @@
 package bros.manage.telegraph;
 
-import gnu.io.SerialPort;
-import gnu.io.SerialPortEvent;
-import gnu.io.SerialPortEventListener;
-
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,6 +19,9 @@ import bros.manage.thread.IndertDataHandler;
 import bros.manage.thread.ProcessEntity;
 import bros.manage.thread.ProcessThread;
 import bros.manage.thread.Queue;
+import gnu.io.SerialPort;
+import gnu.io.SerialPortEvent;
+import gnu.io.SerialPortEventListener;
 
 /**
  * 接收电报监听器
@@ -91,6 +90,25 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 
 	    return sb.toString();
 	}
+
+	public static String hexToStringGBK(String s) {
+		byte[] baKeyword = new byte[s.length() / 2];
+		for (int i = 0; i < baKeyword.length; i++) {
+			try {
+				baKeyword[i] = (byte) (0xff & Integer.parseInt(s.substring(i * 2, i * 2 + 2), 16));
+			} catch (Exception e) {
+				e.printStackTrace();
+				return "";
+			}
+		}
+		try {
+			s = new String(baKeyword, "GBK");// UTF-16le:Not
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			return "";
+		}
+		return s;
+	}
 	public synchronized void serialEvent(SerialPortEvent serialPortEvent) {
 		
 		switch (serialPortEvent.getEventType()) {
@@ -126,14 +144,16 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 					InputStream inputStream = new BufferedInputStream(port.getInputStream());
 					byte[] readBuffer = new byte[1];
 					ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-					
+					StringBuffer dataHex = new StringBuffer();
 					while (inputStream.read(readBuffer) !=-1) {
 	                	try {
 								bytes.write(readBuffer);
+								dataHex.append(bytesToHexString(readBuffer));
 								String message = bytes.toString();
 								if(message.endsWith("NNNN") || message.endsWith("")){
-									logger.debug("第"+receiveNum.getAndIncrement()+"次读取电报："+message);
-									msgQueue.put(message);
+									String result = hexToStringGBK(dataHex.toString());
+									logger.debug("第"+receiveNum.getAndIncrement()+"次读取电报："+result);
+									msgQueue.put(result);
 									bytes.reset();
 								}
 	                	} catch (Exception e) {
