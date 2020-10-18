@@ -23,7 +23,7 @@ public class PropertiesUtil {
 	 * @param dbMap
 	 * @throws ConfigurationException
 	 */
-	public static void setDBPropertiesInfo(Map<String, Object> dbMap) throws ConfigurationException{
+	public static void setDBPropertiesInfo(Map<String, Object> dbMap1) throws ConfigurationException{
 		try {
 			// 获取配置文件中的路径
 			PropertiesConfiguration pconf = new PropertiesConfiguration("application.properties");
@@ -40,20 +40,20 @@ public class PropertiesUtil {
 				file.createNewFile();
 			}
 			PropertiesConfiguration conf = new PropertiesConfiguration(filePath);
-			conf.setProperty("spring.datasource.default.ip", dbMap.get("ip"));
-			conf.setProperty("spring.datasource.default.port", dbMap.get("port"));
-			conf.setProperty("spring.datasource.default.svrName", dbMap.get("svrName"));
-			conf.setProperty("spring.datasource.default.username", dbMap.get("userName"));
-			conf.setProperty("spring.datasource.default.password", dbMap.get("password"));
+			conf.setProperty("spring.datasource.default.ip", dbMap1.get("ip"));
+			conf.setProperty("spring.datasource.default.port", dbMap1.get("port"));
+			conf.setProperty("spring.datasource.default.svrName", dbMap1.get("svrName"));
+			conf.setProperty("spring.datasource.default.username", dbMap1.get("username"));
+			conf.setProperty("spring.datasource.default.password", dbMap1.get("password"));
 			// 串口参数
-			conf.setProperty("spring.datasource.default.portName", dbMap.get("portName"));
-			conf.setProperty("spring.datasource.default.baudRate", dbMap.get("baudRate"));
-			conf.setProperty("spring.datasource.default.databits", dbMap.get("databits"));
-			conf.setProperty("spring.datasource.default.stopbits", dbMap.get("stopbits"));
-			conf.setProperty("spring.datasource.default.parity", dbMap.get("parity"));
-			conf.setProperty("spring.datasource.default.flowControlIn", dbMap.get("flowControlIn"));
-			conf.setProperty("spring.datasource.default.flowControlOut", dbMap.get("flowControlOut"));
-			
+			conf.setProperty("spring.datasource.default.portName", dbMap1.get("portName"));
+			conf.setProperty("spring.datasource.default.baudRate", dbMap1.get("baudRate"));
+			conf.setProperty("spring.datasource.default.databits", dbMap1.get("databits"));
+			conf.setProperty("spring.datasource.default.stopbits", dbMap1.get("stopbits"));
+			conf.setProperty("spring.datasource.default.parity", dbMap1.get("parity"));
+			conf.setProperty("spring.datasource.default.flowControlIn", dbMap1.get("flowControlIn"));
+			conf.setProperty("spring.datasource.default.flowControlOut", dbMap1.get("flowControlOut"));
+			dbMap = dbMap1;
 			conf.save();
 		} catch (ConfigurationException e) {
 			logger.error("修改数据库配置文件信息失败",e);

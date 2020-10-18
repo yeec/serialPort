@@ -262,7 +262,11 @@ public class MainWindow extends JFrame {
 			exitMenuItem.setFont(new java.awt.Font("Dialog", 1, 18));
 			exitMenuItem.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent evt) {
-					exitMenuItemActionPerformed(evt);
+//					exitMenuItemActionPerformed(evt);
+					int a = JOptionPane.showConfirmDialog(null, "确定关闭程序吗？", "温馨提示", JOptionPane.WARNING_MESSAGE);
+					if(a==0){
+						exitMenuItemActionPerformed(evt);
+					}
 				}
 			});
 
@@ -570,10 +574,14 @@ public class MainWindow extends JFrame {
 	
 	
 	private void stopTelegram() {
-		if(sl!=null){
-			//停止报文处理线程
-			sl.stopHandle();
-			
+		try {
+			if(sl!=null){
+				//停止报文处理线程
+				sl.stopHandle();
+			}
+		}catch(Exception e) {
+			logger.error("点击停止收发报按钮，停止报文处理线程失败",e);
+			MainWindow.mainBoard.addMsg("点击停止收发报按钮，停止报文处理线程失败，请稍后重启程序", LocalBoard.INFO_ERROR);
 		}
 		// 组装正常记录日志入参（电报收发系统接收发送状态改变日志）
 		Map<String, Object> stopTelegramMap = new HashMap<String, Object>();
@@ -589,11 +597,14 @@ public class MainWindow extends JFrame {
 		try {
 			//停止发送电报线程
 			stopSendThread();
-			
-			// 删除监听器
-			SerialPortManager.removeListener(ContextTemp.sp);
-			// 关闭监听端口
-			ContextTemp.sp = SerialPortManager.closePort(ContextTemp.sp);
+			try {
+				// 删除监听器
+				SerialPortManager.removeListener(ContextTemp.sp);
+				// 关闭监听端口
+				ContextTemp.sp = SerialPortManager.closePort(ContextTemp.sp);
+			}catch(Exception e) {
+				logger.error("停止收发报过程中，关闭串口失败");
+			}
 			
 			MainWindow.mainBoard.addMsg("系统已停止.", LocalBoard.INFO_SYSTEM);
 			

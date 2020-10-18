@@ -62,8 +62,18 @@
 			WHERE RN >= 0 -->
 	<!-- 查询电报发送列表 -->
     <select id='getTelSendInfo' resultMap='telSendQueueMap'  >
+    <!-- SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by INSERT_TIME,TURNID rownum<10 -->
     	<![CDATA[
-			SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by INSERT_TIME,TURNID
+			
+			SELECT
+	        *
+	        FROM  
+			(  
+			SELECT A.*, ROWNUM RN  
+			FROM (SELECT * FROM TEL_T_SEND_QUEUE  where  SEND_FLAG = '0' order by SEND_DATE,TURNID) A  
+			WHERE ROWNUM <= 10
+			)  
+			WHERE RN >= 0
 		]]>
     </select>
     

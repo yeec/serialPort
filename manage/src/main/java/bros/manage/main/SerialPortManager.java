@@ -238,7 +238,7 @@ public class SerialPortManager {
 	 * @param port
 	 */
 	public static void removeListener(SerialPort port){
-		port.removeEventListener();
+			port.removeEventListener();
 	}
 
 }

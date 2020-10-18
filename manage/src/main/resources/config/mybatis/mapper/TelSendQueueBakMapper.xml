@@ -78,7 +78,7 @@
 			#{flightnumber,jdbcType=VARCHAR},
 			#{startloc,jdbcType=VARCHAR},
 			#{endloc,jdbcType=VARCHAR},
-			sysdate
+			#{insert_time}
 		)		
 	</insert>
 	

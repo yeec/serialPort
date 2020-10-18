@@ -2,7 +2,6 @@ package bros.manage.thread;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,6 +39,11 @@ public class IndertDataHandler implements DealHandler {
 					result = sb.substring(sb.lastIndexOf(""), sb.indexOf(""))+"";
 				}
 			}
+			if(null==result || "".equals(result)){
+				if(sb.lastIndexOf("")!=-1 && sb.indexOf("")!=-1 && sb.lastIndexOf("")<sb.indexOf("")){
+					result = sb.substring(sb.lastIndexOf(""), sb.indexOf(""))+"";
+				}
+			}
 			if(null!=result && !"".equals(result)){
 				logger.debug("第"+num+"次处理后电报："+result);
 	//						MainWindow.recieveBoard.setText("第" + num + "次接收电报:" + result + "\r\n");
@@ -47,7 +51,7 @@ public class IndertDataHandler implements DealHandler {
 				if(!checkServerStatus(result)){
 					continue;
 				}
-				DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "NNNN" : "SOH");
+				DataBaseUtil.addTelReceiveQueueInfo(result, "0", sb.indexOf("NNNN") != -1 ? "ZCZC" : "SOH");
 				DataBaseUtil.updateJaiJailtime("TEL_SENDREC_DATABASE_TIME");
 				MainWindow.mainBoard.addMsg("电报写入数据库", LocalBoard.INFO_LOG);
 				if (MainWindow.serialPortStatus.getBackground().getRed() == 0) {

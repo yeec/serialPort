@@ -98,7 +98,7 @@
     
 
     <!--指定最基础的日志输出级别-->
-    <root level="${rootLevel}">
+    <root level="INFO">
         <!--appender将会添加到这个loger-->
         <appender-ref ref="consoleLog"/>
         <appender-ref ref="fileErrorLog" />

@@ -487,7 +487,7 @@ public class JDialogOptions extends javax.swing.JDialog {
 			// 数据库参数
 			dbMap.put("ip", ip);
 			dbMap.put("port", port);
-			dbMap.put("userName", userName);
+			dbMap.put("username", userName);
 			dbMap.put("password", password);
 			dbMap.put("svrName", svrName);
 			

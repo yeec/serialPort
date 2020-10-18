@@ -109,6 +109,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 		}
 		return s;
 	}
+	@SuppressWarnings("restriction")
 	public synchronized void serialEvent(SerialPortEvent serialPortEvent) {
 		
 		switch (serialPortEvent.getEventType()) {
@@ -150,7 +151,7 @@ public class SerialListener extends Thread implements SerialPortEventListener {
 								bytes.write(readBuffer);
 								dataHex.append(bytesToHexString(readBuffer));
 								String message = bytes.toString();
-								if(message.endsWith("NNNN") || message.endsWith("")){
+								if(message.endsWith("NNNN") || message.endsWith("") || message.endsWith("")){
 									String result = hexToStringGBK(dataHex.toString());
 									logger.debug("第"+receiveNum.getAndIncrement()+"次读取电报："+result);
 									msgQueue.put(result);
